@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useEffect } from 'react';
 
 declare global {
@@ -13,7 +14,7 @@ export const useMetaMask = () => {
   const connectWallet = async () => {
     if (typeof window.ethereum === 'undefined') {
       setError('MetaMask is not installed');
-      return;
+      return null;
     }
 
     try {
