@@ -1,5 +1,14 @@
 'use client'
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { loginAtom } from '../atoms/login';
+import { useAtom } from "jotai";
+import { AppContext } from './AppContex';
+
+
+import { toBase64url } from "@passwordless-id/webauthn/dist/esm/utils";
+import { arrayify } from "ethers/lib/utils";
+import { keccak256, toHex } from "viem";
+import { useWalletJotai } from '../atoms/wallet.jotai';
 
 interface XWalletState {
   isConnected: boolean;
@@ -32,7 +41,19 @@ export function XWalletContextProvider({ children }: XWalletProviderProps) {
     jwt: null,
     email: null
   });
-
+  const [{ mutateAsync, status }] = useAtom(loginAtom);
+  const waw = useContext(AppContext);
+  const {
+    setWalletType,
+    setWalletWeb3Type,
+    setWalletWeb3Address,
+    setWalletDecodedKeys,
+    setWalletCrendentialId,
+    setWalletAddress,
+    walletType,
+    setIsConnected,
+    setPassKeys,
+  } = useWalletJotai();
   // Load saved wallet state on mount
   useEffect(() => {
     const savedData = localStorage.getItem('xwallet_data');
@@ -54,105 +75,72 @@ export function XWalletContextProvider({ children }: XWalletProviderProps) {
 
   const connect = async (email: string) => {
     try {
-      // Step 1: Initialize connection with email
-      const initResponse = await fetch('https://directus.0xequity.com/flows/trigger/bcca7668-bcc2-43e0-b2a3-e2d9630579d5', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Origin': 'https://app.0xequity.com',
-          'Referer': 'https://app.0xequity.com'
-        },
-        body: JSON.stringify({
-          email,
-          chain_id: 8453,
-          user_id: '',
-          device_id: Date.now()
-        })
+      const result = await mutateAsync({
+        email: email,
+        user_id:  "",
+        chain_id: 8453,
+        device_id: 0,
       });
-
-      if (!initResponse.ok) {
-        throw new Error('Failed to initialize wallet connection');
-      }
-
-      const initData = await initResponse.json();
-      
-      if (!initData.credential?.challenge) {
-        throw new Error('No challenge received from server');
-      }
-
-      // Step 2: Create passkey credential
-      const challenge = Uint8Array.from(atob(initData.credential.challenge), c => c.charCodeAt(0));
-      
-      const publicKeyCredential = await navigator.credentials.create({
-        publicKey: {
-          challenge,
-          rp: {
-            name: "xWallet",
-            id: window.location.hostname
-          },
-          user: {
-            id: Uint8Array.from(initData.credential.user.id.split('').map((c: string) => c.charCodeAt(0))),
-            name: initData.credential.user.name,
-            displayName: initData.credential.user.displayName
-          },
-          pubKeyCredParams: [
-            { type: "public-key", alg: -7 } // ES256
-          ],
-          authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            requireResidentKey: false,
-            userVerification: "preferred"
-          },
-          timeout: 60000,
-          attestation: "direct"
+      if (result.wallet_type === "1") {
+        const allkeys = result.all_credential.filter(
+          (x: any) =>
+            x.username !== "undefined" && x.wallet_address !== "undefined"
+        );
+        try {
+          let passKey = await waw.parseRegisterPassKey(
+            allkeys[0].credential,
+            allkeys[0].credential.user?.name
+              ? allkeys[0].credential?.user?.name
+              : allkeys[0].username
+          );
+  
+          let allPassKeysIds = allkeys.map((keys: any) => keys.credential.id )  as string[]
+          const challenge = toBase64url(
+            arrayify(keccak256(toHex("LoginMe2"))) as any
+          ).replace(/=/g, "");
+          const x = await passKey.webAuthnClient.authenticate(challenge,allPassKeysIds);
+          const selectedKey = result.all_credential.filter(
+            (f: any) => f.credential.id === x.id
+          );
+  
+          console.log({selectedKey})
+          if (selectedKey.length > 0) {
+            setWalletDecodedKeys(selectedKey[0].credential.decoded_key);
+            setWalletCrendentialId(selectedKey[0].credential.id);
+            // passKey = await waw.parseRegisterPassKey((selectedKey[0].credential, selectedKey[0].credential.user?.name
+            //   ? selectedKey[0].credential?.user?.name
+            //   : selectedKey[0].username))
+            setIsConnected(true);
+          } else {
+            // setServerError("Unknown / wrong passkey credentials");
+            return;
+          }
+          const selectedPasskey =  await waw.parseRegisterPassKey(
+            selectedKey[0].credential,
+            selectedKey[0].credential.user?.name
+              ? selectedKey[0].credential?.user?.name
+              : selectedKey[0].username
+          )
+          setWalletWeb3Type(result.web3_wallet);
+          // setUserId(result.id);
+          setWalletWeb3Address(result.web3_address);
+          setWalletType(parseInt(result.wallet_type));
+          setWalletAddress(result.wallet_address);
+          setWalletDecodedKeys(selectedKey[0].credential.decoded_key);
+          setWalletCrendentialId(selectedKey[0].credential.id);
+          setPassKeys([selectedPasskey]);
+          const newState: XWalletState = {
+            isConnected: true,
+            walletAddress: result.wallet_address,
+            jwt: null,
+            email: email
+          };
+          setWalletState(newState);
+        } catch (e) {
+          console.log(e, "-------");
+          //alert(JSON.stringify(e));
         }
-      }) as PublicKeyCredential;
-
-      if (!publicKeyCredential) {
-        throw new Error('Failed to create passkey');
       }
-
-      // Step 3: Send the credential response back to the server
-      const rawId = bufferToBase64(publicKeyCredential.rawId);
-      const attestationResponse = publicKeyCredential.response as AuthenticatorAttestationResponse;
-      const clientDataJSON = bufferToBase64(attestationResponse.clientDataJSON);
-      const attestationObject = bufferToBase64(attestationResponse.attestationObject);
-
-      const verifyResponse = await fetch('https://directus.0xequity.com/flows/trigger/bcca7668-bcc2-43e0-b2a3-e2d9630579d5/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Origin': 'https://app.0xequity.com',
-          'Referer': 'https://app.0xequity.com'
-        },
-        body: JSON.stringify({
-          id: rawId,
-          email,
-          clientDataJSON,
-          attestationObject
-        })
-      });
-
-      if (!verifyResponse.ok) {
-        throw new Error('Failed to verify passkey');
-      }
-
-      const verifyData = await verifyResponse.json();
-
-      // Step 4: Update wallet state with the verified data
-      const newState: XWalletState = {
-        isConnected: true,
-        walletAddress: verifyData.wallet_address,
-        jwt: verifyData.jwt,
-        email
-      };
-      
-      setWalletState(newState);
-      localStorage.setItem('xwallet_data', JSON.stringify({
-        wallet_address: verifyData.wallet_address,
-        jwt: verifyData.jwt,
-        email
-      }));
 
     } catch (error) {
       console.error('Failed to connect wallet:', error);
