@@ -6,7 +6,7 @@ import { AppContext } from './AppContex';
 
 
 import { toBase64url } from "@passwordless-id/webauthn/dist/esm/utils";
-import { arrayify } from "ethers/lib/utils";
+import { getBytes } from "ethers";
 import { keccak256, toHex } from "viem";
 import { useWalletJotai } from '../atoms/wallet.jotai';
 
@@ -96,7 +96,7 @@ export function XWalletContextProvider({ children }: XWalletProviderProps) {
   
           let allPassKeysIds = allkeys.map((keys: any) => keys.credential.id )  as string[]
           const challenge = toBase64url(
-            arrayify(keccak256(toHex("LoginMe2"))) as any
+            getBytes(keccak256(toHex("LoginMe2"))) as any
           ).replace(/=/g, "");
           const x = await passKey.webAuthnClient.authenticate(challenge,allPassKeysIds);
           const selectedKey = result.all_credential.filter(

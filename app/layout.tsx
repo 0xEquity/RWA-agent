@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { XWalletContextProvider } from "./providers/XWalletContext";
+import { AppProviders } from "./providers/AppContex";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <XWalletContextProvider>
+        <AppProviders>
           {/* Header (Fixed Height) */}
           <header className="py-6 flex items-center justify-between relative">
             <img
@@ -93,7 +93,7 @@ export default function RootLayout({
             </p>
             <p className="text-xs text-gray-400 mt-2">© {new Date().getFullYear()} Coinbase, Inc.</p>
           </footer>
-        </XWalletContextProvider>
+        </AppProviders>
       </body>
     </html>
   );

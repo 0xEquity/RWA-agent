@@ -4,8 +4,8 @@ import {
   CredentialDescriptor,
   RegistrationJSON,
 } from "@passwordless-id/webauthn/dist/esm/types";
-import { BigNumber } from "ethers";
-import { keccak256 } from "ethers/lib/utils";
+// Import ethers v6 utilities
+import { keccak256, toBeHex, toBigInt } from "ethers";
 
 import { WebAuthnUtils } from "./utils/WebAuthnUtils";
 import { DateTime } from "luxon";
@@ -21,18 +21,18 @@ export interface IWebAuthnClient {
 }
 
 export interface PassKeySignature {
-  id: BigNumber;
-  r: BigNumber;
-  s: BigNumber;
+  id: bigint;
+  r: bigint;
+  s: bigint;
   authData: Uint8Array;
   clientDataPrefix: string;
   clientDataSuffix: string;
 }
 
 export class PassKeyKeyPair {
-  keyHash: BigNumber;
-  pubKeyX: BigNumber;
-  pubKeyY: BigNumber;
+  keyHash: bigint;
+  pubKeyX: bigint;
+  pubKeyY: bigint;
   keyId: string;
   webAuthnClient: IWebAuthnClient;
   name?: string;
@@ -43,8 +43,8 @@ export class PassKeyKeyPair {
 
   constructor(
     keyId: string,
-    pubKeyX: BigNumber,
-    pubKeyY: BigNumber,
+    pubKeyX: bigint,
+    pubKeyY: bigint,
     webAuthnClient: IWebAuthnClient,
     name?: string,
     aaguid?: string,
@@ -52,7 +52,11 @@ export class PassKeyKeyPair {
     regTime?: EpochTimeStamp,
     regData?: RegistrationJSON,
   ) {
-    this.keyHash = BigNumber.from(keccak256(new TextEncoder().encode(keyId)));
+    // In ethers v6, keccak256 directly accepts Uint8Array and returns a hex string
+    const keyBytes = new TextEncoder().encode(keyId);
+    const keyHashHex = keccak256(keyBytes);
+    this.keyHash = toBigInt(keyHashHex);
+    
     this.pubKeyX = pubKeyX;
     this.pubKeyY = pubKeyY;
     this.webAuthnClient = webAuthnClient;
@@ -80,8 +84,8 @@ export class PassKeyKeyPair {
   static revivePassKeyPair = (x: any, waw: IWebAuthnClient): PassKeyKeyPair => {
     return new PassKeyKeyPair(
       x.keyId,
-      BigNumber.from(x.pubKeyX),
-      BigNumber.from(x.pubKeyY),
+      toBigInt(x.pubKeyX),  // Convert to bigint for ethers v6
+      toBigInt(x.pubKeyY),  // Convert to bigint for ethers v6
       waw,
       x.name,
       x.aaguid,
