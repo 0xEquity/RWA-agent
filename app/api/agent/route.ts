@@ -84,7 +84,7 @@ export async function POST(
     // If we haven't returned a component response, return the text response
     return NextResponse.json({
       response: {
-        text: agentResponse || toolResponse,
+        text: agentResponse,
         sender: "agent",
       },
     });

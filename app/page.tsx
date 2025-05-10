@@ -36,7 +36,7 @@ export default function Home() {
       if (!Component) {
         return <div>Unknown component: {message.component}</div>;
       }
-      return <Component {...message.props} />;
+      return <Component data={null} {...message.props} />;
     }
     
     if ('text' in message) {
