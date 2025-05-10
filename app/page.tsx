@@ -2,18 +2,63 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAgent } from "./hooks/useAgent";
+import { useMetaMask } from "./hooks/useMetaMask";
+import { ConnectWallet } from "./components/ConnectWallet";
+import { WalletRequiredPrompt } from "./components/WalletRequiredPrompt";
+import { TransactionRequest } from "./components/TransactionRequest";
+import { SignatureRequest } from "./components/SignatureRequest";
+import { ToolResponse } from "./components/ToolResponse";
+import { XWallet } from "./components/XWallet";
 import ReactMarkdown from "react-markdown";
-import { getComponent } from "./components/ComponentRegistry";
 import type { ComponentMessage, Message } from "./hooks/useAgent";
 
 function isComponentMessage(message: Message): message is ComponentMessage {
   return 'type' in message && message.type === "component";
 }
 
+// Type-safe dynamic component renderer
+const DynamicComponent: React.FC<ComponentMessage> = (message) => {
+  const { component, props } = message;
+  
+  // Directly render specific components with proper typing
+  switch (component) {
+    case 'TransactionRequest':
+      return <TransactionRequest 
+        payload={props.payload as any} 
+        onComplete={props.onComplete as any} 
+      />;
+    case 'SignatureRequest':
+      return <SignatureRequest 
+        payload={props.payload as any} 
+        onComplete={props.onComplete as any} 
+      />;
+    case 'WalletRequiredPrompt':
+      return <WalletRequiredPrompt 
+        onWalletConnected={props.onWalletConnected as any} 
+      />;
+    case 'ConnectWallet':
+      return <ConnectWallet />;
+    case 'ToolResponse':
+      return <ToolResponse data={props.data || props} />;
+    case 'XWallet':
+      return <XWallet {...props as any} />;
+    default:
+      return <div>Unknown component: {component}</div>;
+  }
+};
+
 export default function Home() {
+  // State for client-side rendering detection
+  const [isClient, setIsClient] = useState(false);
   const [input, setInput] = useState("");
   const { messages, sendMessage, isThinking } = useAgent();
+  const { isConnected, address, chainId } = useMetaMask();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Set client-side rendering flag on mount
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -32,11 +77,7 @@ export default function Home() {
 
   const renderMessage = (message: Message) => {
     if (isComponentMessage(message)) {
-      const Component = getComponent(message.component);
-      if (!Component) {
-        return <div>Unknown component: {message.component}</div>;
-      }
-      return <Component data={null} {...message.props} />;
+      return <DynamicComponent {...message} />;
     }
     
     if ('text' in message) {
@@ -50,9 +91,75 @@ export default function Home() {
     return null;
   };
 
+  // Format wallet address for display
+  const formatAddress = (addr: string | null) => {
+    if (!addr) return '';
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  // Wallet status section - only render on client
+  const renderWalletStatus = () => {
+    if (!isClient) {
+      return (
+        <div className="w-full max-w-2xl bg-gray-100 dark:bg-gray-700 p-2 rounded-t-lg flex justify-between items-center">
+          <div className="text-sm">
+            <span className="text-gray-500 dark:text-gray-300">RWA Agent</span>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="mr-2">Loading wallet...</span>
+            </div>
+          </div>
+          <div className="flex-shrink-0">
+            <div className="relative z-10">
+              {/* Placeholder for wallet button during SSR */}
+              <button disabled className="px-4 py-1 text-sm bg-gray-300 dark:bg-gray-600 rounded-lg text-gray-500">
+                Connect
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-full max-w-2xl bg-gray-100 dark:bg-gray-700 p-2 rounded-t-lg flex justify-between items-center">
+        <div className="text-sm">
+          <span className="text-gray-500 dark:text-gray-300">RWA Agent</span>
+        </div>
+        <div>
+          {isConnected ? (
+            <div className="flex items-center space-x-3">
+              <div className="text-xs text-gray-600 dark:text-gray-300">
+                {formatAddress(address)}
+              </div>
+              <div className="flex items-center">
+                <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                <span className="text-xs text-gray-600 dark:text-gray-300">Connected</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="mr-2">Wallet not connected</span>
+            </div>
+          )}
+        </div>
+        {/* Wallet component */}
+        <div className="flex-shrink-0">
+          <div className="relative z-10">
+            <ConnectWallet />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col flex-grow items-center justify-center text-black dark:text-white w-full h-full">
-      <div className="w-full max-w-2xl h-[70vh] bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 flex flex-col">
+      {/* Wallet info bar with client-side rendering protection */}
+      {renderWalletStatus()}
+
+      <div className="w-full max-w-2xl h-[70vh] bg-white dark:bg-gray-800 shadow-lg rounded-b-lg p-4 flex flex-col">
         {/* Messages container */}
         <div className="flex-grow overflow-y-auto mb-4 space-y-4">
           {messages.map((message, index) => (
