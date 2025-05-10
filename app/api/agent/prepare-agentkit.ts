@@ -3,7 +3,6 @@ import {
   AgentKit,
   cdpApiActionProvider,
   erc20ActionProvider,
-  NETWORK_ID_TO_VIEM_CHAIN,
   pythActionProvider,
   ViemWalletProvider,
   walletActionProvider,
@@ -80,8 +79,6 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
     }
 
     const account = privateKeyToAccount(privateKey);
-    const networkId = process.env.NETWORK_ID as string;
-
     const client = createWalletClient({
       account,
       chain: base,
