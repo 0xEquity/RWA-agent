@@ -12,6 +12,8 @@ import {
 import { ConnectWalletActionProvider } from "@/app/action-providers/connectWalletActionProvider";
 import { XWalletActionProvider } from "@/app/action-providers/xWalletActionProvider";
 import { ZeroXEquityActionProvider } from "@/app/action-providers/0xEquityActionProvider";
+import { MetaMaskWalletProvider } from "@/app/lib/agentkit/providers/MetaMaskWalletProvider";
+import { cookies } from "next/headers";
 import fs from "fs";
 import { createWalletClient, Hex, http } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
@@ -48,6 +50,34 @@ import { base } from "viem/chains";
 
 // Configure a file to persist a user's private key if none provided
 const WALLET_DATA_FILE = "wallet_data.txt";
+const WALLET_SESSION_COOKIE = 'wallet_session';
+
+/**
+ * Gets MetaMask wallet session data from the request cookies
+ * @returns Wallet address and chain ID from the session, or null if no session exists
+ */
+const getWalletSessionData = (): { walletAddress: string | null; chainId: number | null } => {
+  try {
+    // Get the wallet session cookie
+    const sessionCookie = cookies().get(WALLET_SESSION_COOKIE);
+    
+    if (!sessionCookie?.value) {
+      return { walletAddress: null, chainId: null };
+    }
+    
+    // Parse the session data
+    const session = JSON.parse(sessionCookie.value);
+    
+    return {
+      walletAddress: session.walletAddress || null,
+      chainId: session.chainId || null
+    };
+    
+  } catch (error) {
+    console.error('Error retrieving wallet session data:', error);
+    return { walletAddress: null, chainId: null };
+  }
+};
 
 /**
  * Prepares the AgentKit and WalletProvider.
@@ -64,35 +94,53 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
   walletProvider: WalletProvider;
 }> {
   try {
-    // Initialize WalletProvider: https://docs.cdp.coinbase.com/agentkit/docs/wallet-management
-    let privateKey = process.env.PRIVATE_KEY as Hex;
-    if (!privateKey) {
-      if (fs.existsSync(WALLET_DATA_FILE)) {
-        privateKey = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")).privateKey;
-        console.info("Found private key in wallet_data.txt");
-      } else {
-        privateKey = generatePrivateKey();
-        fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify({ privateKey }));
-        console.log("Created new private key and saved to wallet_data.txt");
-        console.log(
-          "We recommend you save this private key to your .env file and delete wallet_data.txt afterwards.",
-        );
+    // Check for MetaMask wallet session first
+    const { walletAddress, chainId } = getWalletSessionData();
+    
+    // Initialize the appropriate wallet provider based on the session
+    let walletProvider: WalletProvider;
+    let isMetaMaskProvider = false;
+    
+    if (walletAddress && chainId) {
+      // If we have a MetaMask session, use the MetaMask wallet provider
+      console.log(`Using MetaMask wallet provider with address: ${walletAddress} and chainId: ${chainId}`);
+      walletProvider = new MetaMaskWalletProvider(walletAddress, chainId);
+      isMetaMaskProvider = true;
+    } else {
+      // Otherwise, use the default Viem wallet provider with the private key
+      console.log('No MetaMask session found, using default wallet provider');
+      
+      // Initialize WalletProvider with private key as before
+      let privateKey = process.env.PRIVATE_KEY as Hex;
+      if (!privateKey) {
+        if (fs.existsSync(WALLET_DATA_FILE)) {
+          privateKey = JSON.parse(fs.readFileSync(WALLET_DATA_FILE, "utf8")).privateKey;
+          console.info("Found private key in wallet_data.txt");
+        } else {
+          privateKey = generatePrivateKey();
+          fs.writeFileSync(WALLET_DATA_FILE, JSON.stringify({ privateKey }));
+          console.log("Created new private key and saved to wallet_data.txt");
+          console.log(
+            "We recommend you save this private key to your .env file and delete wallet_data.txt afterwards.",
+          );
+        }
       }
+  
+      const account = privateKeyToAccount(privateKey);
+      const client = createWalletClient({
+        account,
+        chain: base,
+        transport: http(),
+      });
+      walletProvider = new ViemWalletProvider(client);
     }
 
-    const account = privateKeyToAccount(privateKey);
-    const client = createWalletClient({
-      account,
-      chain: base,
-      transport: http(),
-    });
-    const walletProvider = new ViemWalletProvider(client);
-
+    // Set up action providers - all actions are available regardless of wallet provider
     const actionProviders: ActionProvider[] = [
       wethActionProvider(),
       pythActionProvider(),
       erc20ActionProvider(),
-      new WalletActionProvider(),
+      // new WalletActionProvider(),
       new ConnectWalletActionProvider(),
       new XWalletActionProvider(),
       new ZeroXEquityActionProvider(),
@@ -108,6 +156,7 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
       );
     }
 
+    // Create AgentKit with the selected wallet provider
     const agentkit = await AgentKit.from({
       walletProvider,
       actionProviders,
