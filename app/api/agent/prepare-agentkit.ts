@@ -14,6 +14,7 @@ import { ConnectWalletActionProvider } from "@/app/action-providers/connectWalle
 import fs from "fs";
 import { createWalletClient, Hex, http } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { base } from "viem/chains";
 
 /**
  * AgentKit Integration Route
@@ -83,7 +84,7 @@ export async function prepareAgentkitAndWalletProvider(): Promise<{
 
     const client = createWalletClient({
       account,
-      chain: NETWORK_ID_TO_VIEM_CHAIN[networkId],
+      chain: base,
       transport: http(),
     });
     const walletProvider = new ViemWalletProvider(client);
