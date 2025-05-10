@@ -1,9 +1,11 @@
 import { ConnectWallet } from './ConnectWallet';
 import { ToolResponse } from './ToolResponse';
+import { XWallet } from './XWallet';
 
 const componentRegistry = {
   ConnectWallet: ConnectWallet,
   ToolResponse: ToolResponse,
+  XWallet: XWallet,
   // Add more components here as needed
 };
 
