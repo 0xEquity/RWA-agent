@@ -5,12 +5,11 @@ import { useAgent } from "./hooks/useAgent";
 import { useMetaMask } from "./hooks/useMetaMask";
 import { ConnectWallet } from "./components/ConnectWallet";
 import { WalletRequiredPrompt } from "./components/WalletRequiredPrompt";
-import { TransactionRequest } from "./components/TransactionRequest";
-import { SignatureRequest } from "./components/SignatureRequest";
 import { ToolResponse } from "./components/ToolResponse";
 import { XWallet } from "./components/XWallet";
 import ReactMarkdown from "react-markdown";
 import type { ComponentMessage, Message } from "./hooks/useAgent";
+import { SignTx } from "./components/SignTx";
 
 function isComponentMessage(message: Message): message is ComponentMessage {
   return 'type' in message && message.type === "component";
@@ -19,25 +18,19 @@ function isComponentMessage(message: Message): message is ComponentMessage {
 // Type-safe dynamic component renderer
 const DynamicComponent: React.FC<ComponentMessage> = (message) => {
   const { component, props } = message;
-  
+  console.log(props, message)
   // Directly render specific components with proper typing
   switch (component) {
-    case 'TransactionRequest':
-      return <TransactionRequest 
-        payload={props.payload as any} 
-        onComplete={props.onComplete as any} 
-      />;
-    case 'SignatureRequest':
-      return <SignatureRequest 
-        payload={props.payload as any} 
-        onComplete={props.onComplete as any} 
-      />;
+
     case 'WalletRequiredPrompt':
       return <WalletRequiredPrompt 
         onWalletConnected={props.onWalletConnected as any} 
       />;
     case 'ConnectWallet':
       return <ConnectWallet />;
+
+    case 'SignTX':
+        return <SignTx data={props}/>;
     case 'ToolResponse':
       return <ToolResponse data={props.data || props} />;
     case 'XWallet':
@@ -49,10 +42,11 @@ const DynamicComponent: React.FC<ComponentMessage> = (message) => {
 
 export default function Home() {
   // State for client-side rendering detection
+
   const [isClient, setIsClient] = useState(false);
   const [input, setInput] = useState("");
   const { messages, sendMessage, isThinking } = useAgent();
-  const { isConnected, address, chainId } = useMetaMask();
+  const { isConnected, account: address } = useMetaMask();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Set client-side rendering flag on mount
@@ -128,7 +122,7 @@ export default function Home() {
           <span className="text-gray-500 dark:text-gray-300">RWA Agent</span>
         </div>
         <div>
-          {isConnected ? (
+          {isConnected && address ? (
             <div className="flex items-center space-x-3">
               <div className="text-xs text-gray-600 dark:text-gray-300">
                 {formatAddress(address)}

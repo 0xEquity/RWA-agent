@@ -6,9 +6,11 @@ import { AppContext } from './AppContex';
 
 
 import { toBase64url } from "@passwordless-id/webauthn/dist/esm/utils";
-import { getBytes } from "ethers";
 import { keccak256, toHex } from "viem";
 import { useWalletJotai } from '../atoms/wallet.jotai';
+import { ChainId } from '../sdk/ChainId';
+import { syncSessionWithBackend } from '../hooks/useMetaMask';
+import { arrayify } from 'ethers/lib/utils';
 
 interface XWalletState {
   isConnected: boolean;
@@ -50,7 +52,6 @@ export function XWalletContextProvider({ children }: XWalletProviderProps) {
     setWalletDecodedKeys,
     setWalletCrendentialId,
     setWalletAddress,
-    walletType,
     setIsConnected,
     setPassKeys,
   } = useWalletJotai();
@@ -96,7 +97,7 @@ export function XWalletContextProvider({ children }: XWalletProviderProps) {
   
           let allPassKeysIds = allkeys.map((keys: any) => keys.credential.id )  as string[]
           const challenge = toBase64url(
-            getBytes(keccak256(toHex("LoginMe2"))) as any
+            arrayify(keccak256(toHex("LoginMe2"))) as any
           ).replace(/=/g, "");
           const x = await passKey.webAuthnClient.authenticate(challenge,allPassKeysIds);
           const selectedKey = result.all_credential.filter(
@@ -128,6 +129,7 @@ export function XWalletContextProvider({ children }: XWalletProviderProps) {
           setWalletAddress(result.wallet_address);
           setWalletDecodedKeys(selectedKey[0].credential.decoded_key);
           setWalletCrendentialId(selectedKey[0].credential.id);
+          syncSessionWithBackend(result.wallet_address, ChainId.base);
           setPassKeys([selectedPasskey]);
           const newState: XWalletState = {
             isConnected: true,

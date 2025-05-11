@@ -1,3 +1,9 @@
+import { BigNumber } from "bignumber.js";
+
+export const MaxUint256 = new BigNumber(
+  "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+);
+
 export const DIRECTUS_API = {
     INDEXER_URL: "https://hasura.0xequity.com/v1/graphql",
     USER_NOT_EXIST: 'https://directus.0xequity.com/flows/trigger/1c984de3-d4c4-44a2-87a0-591143bb8db5',

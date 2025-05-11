@@ -2,16 +2,14 @@ import { ConnectWallet } from './ConnectWallet';
 import { ToolResponse } from './ToolResponse';
 import { XWallet } from './XWallet';
 import { WalletRequiredPrompt } from './WalletRequiredPrompt';
-import { TransactionRequest } from './TransactionRequest';
-import { SignatureRequest } from './SignatureRequest';
+import { SignTx } from './SignTx';
 
 const componentRegistry = {
   ConnectWallet: ConnectWallet,
+  SignTX: SignTx,
   ToolResponse: ToolResponse,
   XWallet: XWallet,
   WalletRequiredPrompt: WalletRequiredPrompt,
-  TransactionRequest: TransactionRequest,
-  SignatureRequest: SignatureRequest,
   // Add more components here as needed
 };
 

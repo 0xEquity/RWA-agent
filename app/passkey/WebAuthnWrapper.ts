@@ -4,8 +4,8 @@ import {
   CredentialDescriptor,
   RegistrationJSON,
 } from "@passwordless-id/webauthn/dist/esm/types";
-// Import ethers v6 utilities
-import { keccak256, toBeHex, toBigInt } from "ethers";
+import { BigNumber } from "ethers";
+import { keccak256 } from "ethers/lib/utils";
 
 import { WebAuthnUtils } from "./utils/WebAuthnUtils";
 import { DateTime } from "luxon";
@@ -21,18 +21,18 @@ export interface IWebAuthnClient {
 }
 
 export interface PassKeySignature {
-  id: bigint;
-  r: bigint;
-  s: bigint;
+  id: BigNumber;
+  r: BigNumber;
+  s: BigNumber;
   authData: Uint8Array;
   clientDataPrefix: string;
   clientDataSuffix: string;
 }
 
 export class PassKeyKeyPair {
-  keyHash: bigint;
-  pubKeyX: bigint;
-  pubKeyY: bigint;
+  keyHash: BigNumber;
+  pubKeyX: BigNumber;
+  pubKeyY: BigNumber;
   keyId: string;
   webAuthnClient: IWebAuthnClient;
   name?: string;
@@ -43,8 +43,8 @@ export class PassKeyKeyPair {
 
   constructor(
     keyId: string,
-    pubKeyX: bigint,
-    pubKeyY: bigint,
+    pubKeyX: BigNumber,
+    pubKeyY: BigNumber,
     webAuthnClient: IWebAuthnClient,
     name?: string,
     aaguid?: string,
@@ -52,11 +52,7 @@ export class PassKeyKeyPair {
     regTime?: EpochTimeStamp,
     regData?: RegistrationJSON,
   ) {
-    // In ethers v6, keccak256 directly accepts Uint8Array and returns a hex string
-    const keyBytes = new TextEncoder().encode(keyId);
-    const keyHashHex = keccak256(keyBytes);
-    this.keyHash = toBigInt(keyHashHex);
-    
+    this.keyHash = BigNumber.from(keccak256(new TextEncoder().encode(keyId)));
     this.pubKeyX = pubKeyX;
     this.pubKeyY = pubKeyY;
     this.webAuthnClient = webAuthnClient;
@@ -84,8 +80,8 @@ export class PassKeyKeyPair {
   static revivePassKeyPair = (x: any, waw: IWebAuthnClient): PassKeyKeyPair => {
     return new PassKeyKeyPair(
       x.keyId,
-      toBigInt(x.pubKeyX),  // Convert to bigint for ethers v6
-      toBigInt(x.pubKeyY),  // Convert to bigint for ethers v6
+      BigNumber.from(x.pubKeyX),
+      BigNumber.from(x.pubKeyY),
       waw,
       x.name,
       x.aaguid,

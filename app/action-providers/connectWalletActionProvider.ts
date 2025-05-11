@@ -62,7 +62,9 @@ export class ConnectWalletActionProvider extends ActionProvider {
     the server-side session data.
 
     Use this to quickly determine if the user has a wallet connected before 
-    attempting operations that require a connected wallet.
+    attempting operations that require a connected wallet. This should be your default wallet address.
+    
+
     `,
     schema: CheckWalletConnectionSchema,
   })
@@ -111,6 +113,8 @@ export class ConnectWalletActionProvider extends ActionProvider {
     - Chain ID
 
     Use this to get session-based wallet information without requiring direct wallet access.
+
+    Important: Now this now your default wallet , address, web3 address
     `,
     schema: GetWalletSessionSchema,
   })
@@ -120,7 +124,7 @@ export class ConnectWalletActionProvider extends ActionProvider {
   ): Promise<string> {
     try {
       const sessionData = await this.getSessionWalletData();
-      
+        console.log({sessionData})
       if (sessionData.isConnected && sessionData.walletAddress) {
         return [
           "Wallet Session Details:",
@@ -148,6 +152,7 @@ export class ConnectWalletActionProvider extends ActionProvider {
     
     Use this to check if a wallet is currently connected and get its details.
     The agent will attempt to get live wallet data first, and fall back to session data if necessary.
+    Important: Now this now your default wallet , address, web3 address
     `,
     schema: GetWalletDetailsSchema,
   })
@@ -157,49 +162,18 @@ export class ConnectWalletActionProvider extends ActionProvider {
   ): Promise<string> {
     try {
       // First try to get details directly from the wallet provider
-      try {
-        const walletAddress = walletProvider.getAddress();
-        const network = walletProvider.getNetwork();
-        const protocolFamily = network.protocolFamily || 'evm';
-        const networkId = network.networkId || 'unknown';
-        const chainId = network.chainId || 'unknown';
-        const providerName = walletProvider.getName();
-        const terminology = PROTOCOL_FAMILY_TO_TERMINOLOGY[protocolFamily] || DEFAULT_TERMINOLOGY;
-
-        let balanceMessage = `- Native Balance: (Connect wallet to view balance) ${terminology.displayUnit}`;
-        try {
-          const balance = await walletProvider.getBalance();
-          balanceMessage = `- Native Balance: ${balance.toString()} ${terminology.unit}`;
-        } catch (balanceError) {
-          console.error('Failed to get balance:', balanceError);
-        }
-        
+      const sessionData = await this.getSessionWalletData();
+      
+      if (sessionData.isConnected && sessionData.walletAddress) {
         return [
-          "Wallet Details (Live Connection):",
-          `- Provider: ${providerName}`,
-          `- Address: ${walletAddress}`,
-          "- Network:",
-          `  * Protocol Family: ${protocolFamily}`,
-          `  * Network ID: ${networkId}`,
-          `  * Chain ID: ${chainId}`,
-          balanceMessage,
+          "Wallet Session Details:",
+          `- Connected: Yes`,
+          `- Provider: ${sessionData.providerName || sessionData.walletType || "unknown"}`,
+          `- Address: ${sessionData.walletAddress}`,
+          `- Chain ID: ${sessionData.chainId || 'unknown'}`,
         ].join("\n");
-      } catch (walletError) {
-        // If direct wallet provider access fails, try to get info from session
-        const sessionData = await this.getSessionWalletData();
-        
-        if (sessionData.isConnected && sessionData.walletAddress) {
-          return [
-            "Wallet Details (From Session Cookies):",
-            `- Provider: ${sessionData.providerName || sessionData.walletType || "unknown"}`,
-            `- Address: ${sessionData.walletAddress}`,
-            "- Network:",
-            `  * Chain ID: ${sessionData.chainId || 'unknown'}`,
-            "- Native Balance: (Connect wallet directly to view balance)",
-          ].join("\n");
-        } else {
-          return "No wallet is currently connected according to session cookies. Please connect a wallet first using the connect_metamask or connect_xwallet action.";
-        }
+      } else {
+        return "No wallet session is currently active in server-side cookies. Please connect a wallet first.";
       }
     } catch (error) {
       return `Error getting wallet details: ${error}`;
@@ -217,27 +191,23 @@ export class ConnectWalletActionProvider extends ActionProvider {
     try {
       // Access cookies using Next.js headers API
       const cookieStore = cookies();
-      
+      console.log(cookieStore,"0-0-0-0-0-1")
+      const walletSession = cookieStore.get('wallet_session')?.value
+      console.log({walletSession})
+      const  p = JSON.parse(walletSession as any)
       // Check for wallet-related cookies
-      const walletAddress = cookieStore.get('wallet_address')?.value;
+      const walletAddress = p.walletAddress;
       const walletType = cookieStore.get('wallet_type')?.value;
-      const chainId = cookieStore.get('chain_id')?.value;
+      const chainId = p.chainId;
+
+      console.log({walletAddress},"0-0-0-0-0-0-0-0")
       
       if (walletAddress) {
-        // Determine provider name based on wallet type
-        let providerName = "Unknown Wallet";
-        if (walletType === 'metamask') {
-          providerName = 'MetaMask';
-        } else if (walletType === 'xwallet') {
-          providerName = 'xWallet';
-        }
-        
         return {
           isConnected: true,
           walletAddress,
           walletType,
           chainId,
-          providerName
         };
       }
     } catch (error) {

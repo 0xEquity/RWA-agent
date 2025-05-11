@@ -2,7 +2,6 @@ import { AgentRequest, AgentResponse, ActionRequired } from "@/app/types/api";
 import { NextResponse } from "next/server";
 import { createAgent } from "./create-agent";
 import { cookies } from "next/headers";
-import { MetaMaskWalletProvider } from "@/app/lib/agentkit/providers/MetaMaskWalletProvider";
 
 const WALLET_SESSION_COOKIE = 'wallet_session';
 
@@ -25,7 +24,7 @@ const getWalletSessionData = () => {
     if (!sessionCookie?.value) {
       return null;
     }
-    
+    console.log(sessionCookie.value,"----------------------")
     return JSON.parse(sessionCookie.value);
   } catch (error) {
     console.error('Error retrieving wallet session data:', error);

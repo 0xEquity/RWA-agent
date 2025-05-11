@@ -1,10 +1,10 @@
 import base64url from "base64url";
-import { toBigInt } from "ethers";
+import { BigNumber } from "ethers";
 
 export class WebAuthnUtils {
   static async getPublicKeyFromBytes(
     publicKeyBytes: string,
-  ): Promise<bigint[]> {
+  ): Promise<BigNumber[]> {
     const cap = {
       name: "ECDSA",
       namedCurve: "P-256",
@@ -18,8 +18,8 @@ export class WebAuthnUtils {
 
     if (jwk.x && jwk.y)
       return [
-        toBigInt('0x' + Buffer.from(base64url.toBuffer(jwk.x)).toString('hex')),
-        toBigInt('0x' + Buffer.from(base64url.toBuffer(jwk.y)).toString('hex')),
+        BigNumber.from(base64url.toBuffer(jwk.x)),
+        BigNumber.from(base64url.toBuffer(jwk.y)),
       ];
     else throw new Error("Invalid public key");
   }

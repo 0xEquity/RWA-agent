@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
       connectedAt: Date.now(),
     };
     
+    console.log(WALLET_SESSION_COOKIE, session,"=============")
     // Set encrypted httpOnly cookie with session data
     cookies().set({
       name: WALLET_SESSION_COOKIE,
