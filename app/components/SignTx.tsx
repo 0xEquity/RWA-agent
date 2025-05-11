@@ -17,6 +17,7 @@ import { RentShare_Abi } from "../abi/RentShare_Abi";
 import { RENT_POSITION_AUTOMATER_Abi } from "../abi/RentPositionAutomater_Abi";
 import { useTransactionExecuter } from "../hooks/useTransactionWatcher";
 import { TransactionType } from "../types/TransactionTypes";
+import { useTransactionOverviewJotai } from "../atoms/transactionoverview.jotai";
 
 export const SignTx: FC<{ data: any }> = ({ data }) => {
   console.log(data);
@@ -25,6 +26,7 @@ export const SignTx: FC<{ data: any }> = ({ data }) => {
     useWriteRentShareDelegateRent();
   const { create } = useTransactionExecuter();
   const [expiration, setExpiration] = useState(0);
+  const {isTxConfirmed, isTxHash, setTxHash} = useTransactionOverviewJotai()
   const [nonce, setNonce] = useState(0);
   useMemo(() => {
     if (nonce === 0 && expiration === 0) {
@@ -80,7 +82,7 @@ export const SignTx: FC<{ data: any }> = ({ data }) => {
           createPositionCallData,
         ]
       );
-      create({
+        create({
         nonce,
         expiration,
         callData: [approveTransactionTX, createPositionTX],
@@ -111,6 +113,7 @@ export const SignTx: FC<{ data: any }> = ({ data }) => {
         confirmation = await client.waitForTransactionReceipt({
           hash: automateTx,
         });
+        setTxHash(automateTx)
         setSuccess(true);
       }
     }
@@ -120,7 +123,11 @@ export const SignTx: FC<{ data: any }> = ({ data }) => {
       Yield Automation Strategy Property tokens: {data.propertyTokens} <br />
       Minimum USDC: {data.minUSDC} <br />
       Max USDC: {data.maxUSDC} <br />
-      {!success ? (
+      {isTxConfirmed? (
+        <div>Successfully Activated
+            <a target="_blank" href={`https://basescan.org/tx/${isTxHash}`}>Viex Tx</a>
+        </div>
+      ):!success ? (
         <button
           onClick={handleClick}
           className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center"
@@ -128,7 +135,9 @@ export const SignTx: FC<{ data: any }> = ({ data }) => {
           <span>Confirm Tx</span>
         </button>
       ) : (
-        <div>Successfully Activated</div>
+        <div>Successfully Activated
+            <a target="_blank" href={`https://basescan.org/tx/${isTxHash}`}>Viex Tx</a>
+        </div>
       )}
     </div>
   );
