@@ -10,6 +10,7 @@ import { XWallet } from "./components/XWallet";
 import ReactMarkdown from "react-markdown";
 import type { ComponentMessage, Message } from "./hooks/useAgent";
 import { SignTx } from "./components/SignTx";
+import { useWalletJotai } from "./atoms/wallet.jotai";
 
 function isComponentMessage(message: Message): message is ComponentMessage {
   return 'type' in message && message.type === "component";
@@ -48,6 +49,7 @@ export default function Home() {
   const { messages, sendMessage, isThinking } = useAgent();
   const { isConnected, account: address } = useMetaMask();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const {walletAddress, isConnected: xWalletConnect} = useWalletJotai()
 
   // Set client-side rendering flag on mount
   useEffect(() => {
@@ -122,7 +124,17 @@ export default function Home() {
           <span className="text-gray-500 dark:text-gray-300">RWA Agent</span>
         </div>
         <div>
-          {isConnected && address ? (
+          {xWalletConnect && walletAddress ? (
+            <div className="flex items-center space-x-3">
+              <div className="text-xs text-gray-600 dark:text-gray-300">
+                {formatAddress(walletAddress)}
+              </div>
+              <div className="flex items-center">
+                <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                <span className="text-xs text-gray-600 dark:text-gray-300">Connected</span>
+              </div>
+            </div>
+          ) :isConnected && address ? (
             <div className="flex items-center space-x-3">
               <div className="text-xs text-gray-600 dark:text-gray-300">
                 {formatAddress(address)}
