@@ -64,7 +64,7 @@ export const SignTx: FC<{ data: any }> = ({ data }) => {
         args: [
           {
             automateRewards: true,
-            noOfPropertyTokens: 100n,
+            noOfPropertyTokens: BigInt(data.propertyTokens),
             propertyTokenAddress: WXRWA1_ADDRESS[base.id] as `0x${string}`,
             rewardBehavior: {
               harvestTokenOut: USDC_ADDRESS[base.id] as `0x${string}`,
