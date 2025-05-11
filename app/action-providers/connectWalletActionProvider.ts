@@ -191,17 +191,12 @@ export class ConnectWalletActionProvider extends ActionProvider {
     try {
       // Access cookies using Next.js headers API
       const cookieStore = cookies();
-      console.log(cookieStore,"0-0-0-0-0-1")
       const walletSession = cookieStore.get('wallet_session')?.value
-      console.log({walletSession})
       const  p = JSON.parse(walletSession as any)
       // Check for wallet-related cookies
       const walletAddress = p.walletAddress;
       const walletType = cookieStore.get('wallet_type')?.value;
-      const chainId = p.chainId;
-
-      console.log({walletAddress},"0-0-0-0-0-0-0-0")
-      
+      const chainId = p.chainId;      
       if (walletAddress) {
         return {
           isConnected: true,

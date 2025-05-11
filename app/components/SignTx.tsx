@@ -124,7 +124,7 @@ export const SignTx: FC<{ data: any }> = ({ data }) => {
       Minimum USDC: {data.minUSDC} <br />
       Max USDC: {data.maxUSDC} <br />
       {isTxConfirmed? (
-        <div>Successfully Activated
+        <div>Successfully Activated{' '}
             <a target="_blank" href={`https://basescan.org/tx/${isTxHash}`}>Viex Tx</a>
         </div>
       ):!success ? (
@@ -135,7 +135,7 @@ export const SignTx: FC<{ data: any }> = ({ data }) => {
           <span>Confirm Tx</span>
         </button>
       ) : (
-        <div>Successfully Activated
+        <div>Successfully Activated{' '}
             <a target="_blank" href={`https://basescan.org/tx/${isTxHash}`}>Viex Tx</a>
         </div>
       )}
