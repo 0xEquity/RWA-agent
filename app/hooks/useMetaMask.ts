@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { useCallback, useMemo } from "react";
 import { useAccount, useChainId } from "wagmi";
+import { useWalletJotai } from "../atoms/wallet.jotai";
 
 declare global {
   interface Window {
@@ -40,6 +41,7 @@ export const syncSessionWithBackend = (
 export const useMetaMask = () => {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const {walletAddress, isConnected: xWalletConnect} = useWalletJotai()
 
   // Sync session with backend
   
@@ -48,10 +50,13 @@ export const useMetaMask = () => {
     if (!isConnected) {
       await syncSessionWithBackend(null, null);
     }
-    if (isConnected && address) {
+    if(xWalletConnect && walletAddress){
+      await syncSessionWithBackend(walletAddress, chainId);
+    }
+    else if (isConnected && address) {
       await syncSessionWithBackend(address, chainId);
     }
-  }, [isConnected, address, chainId]);
+  }, [isConnected, address, chainId, walletAddress, xWalletConnect]);
   return {
     account: address,
     chainId,
