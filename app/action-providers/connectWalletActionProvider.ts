@@ -63,7 +63,7 @@ export class ConnectWalletActionProvider extends ActionProvider {
 
     Use this to quickly determine if the user has a wallet connected before 
     attempting operations that require a connected wallet. This should be your default wallet address.
-    
+    Important: you can use get_wallet_session to get the address 
 
     `,
     schema: CheckWalletConnectionSchema,
