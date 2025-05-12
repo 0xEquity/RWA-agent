@@ -11,6 +11,8 @@ import ReactMarkdown from "react-markdown";
 import type { ComponentMessage, Message } from "./hooks/useAgent";
 import { SignTx } from "./components/SignTx";
 import { useWalletJotai } from "./atoms/wallet.jotai";
+import { PropertyDisplay } from "./components/PropertyDisplay";
+import { InvestmentCalculator } from "./components/InvestmentCalculator";
 
 function isComponentMessage(message: Message): message is ComponentMessage {
   return 'type' in message && message.type === "component";
@@ -36,6 +38,10 @@ const DynamicComponent: React.FC<ComponentMessage> = (message) => {
       return <ToolResponse data={props.data || props} />;
     case 'XWallet':
       return <XWallet {...props as any} />;
+    case 'PropertyDisplay':
+      return <PropertyDisplay {...props as any} />;
+    case 'InvestmentCalculator':
+      return <InvestmentCalculator {...props as any} />;
     default:
       return <div>Unknown component: {component}</div>;
   }

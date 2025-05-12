@@ -3,6 +3,8 @@ import { ToolResponse } from './ToolResponse';
 import { XWallet } from './XWallet';
 import { WalletRequiredPrompt } from './WalletRequiredPrompt';
 import { SignTx } from './SignTx';
+import { PropertyDisplay } from './PropertyDisplay';
+import { InvestmentCalculator } from './InvestmentCalculator';
 
 const componentRegistry = {
   ConnectWallet: ConnectWallet,
@@ -10,6 +12,8 @@ const componentRegistry = {
   ToolResponse: ToolResponse,
   XWallet: XWallet,
   WalletRequiredPrompt: WalletRequiredPrompt,
+  PropertyDisplay: PropertyDisplay,
+  InvestmentCalculator: InvestmentCalculator,
   // Add more components here as needed
 };
 
