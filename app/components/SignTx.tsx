@@ -105,7 +105,7 @@ export const SignTx: FC<{ data: any }> = ({ data }) => {
               rewardBehavior: {
                 harvestTokenOut: USDC_ADDRESS[base.id] as `0x${string}`,
                 rewardrecipient: data.address as `0x${string}`,
-                rewardBehavior: 1,
+                rewardBehavior: data.strategy,
               },
             },
           ],
