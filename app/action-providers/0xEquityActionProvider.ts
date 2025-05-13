@@ -333,20 +333,20 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
     try {
       // Create actions array for property display
       const actions = [
+        // {
+        //   label: "Buy Property Tokens",
+        //   action: "buy_property_tokens"
+        // },
+        // {
+        //   label: "Calculate Returns",
+        //   action: "calculate_investment_returns"
+        // },
         {
-          label: "Buy Property Tokens",
-          action: "buy_property_tokens"
-        },
-        {
-          label: "Calculate Returns",
-          action: "calculate_investment_returns"
-        },
-        {
-          label: "View Title Deed",
+          label: "Title Deed",
           url: PROPERTY_DATA.titleDeed
         },
         {
-          label: "View Sales Contract",
+          label: "Sales Contract",
           url: PROPERTY_DATA.salesContract
         }
       ];
