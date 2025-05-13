@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { ActionFollowUpHelper } from './ActionFollowUpHelper';
 
 interface PropertyImage {
   id: number;
@@ -69,9 +70,10 @@ interface PropertyDisplayProps {
   property: PropertyData;
   images: PropertyImage[];
   actions: Action[];
+  followUpMessage?: string;
 }
 
-export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({ property, images, actions }) => {
+export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({ property, images, actions, followUpMessage }) => {
   const [activeImage, setActiveImage] = React.useState<number>(0);
 
   const handleImageClick = (index: number) => {
@@ -87,6 +89,12 @@ export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({ property, imag
 
   return (
     <div className="property-display rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+      {/* Include the ActionFollowUpHelper to handle follow-up messages */}
+      <ActionFollowUpHelper 
+        followUpMessage={followUpMessage} 
+        componentName="PropertyDisplay" 
+      />
+      
       {/* Image Gallery */}
       <div className="relative">
         <div className="h-96 relative">

@@ -13,6 +13,7 @@ import { SignTx } from "./components/SignTx";
 import { useWalletJotai } from "./atoms/wallet.jotai";
 import { PropertyDisplay } from "./components/PropertyDisplay";
 import { InvestmentCalculator } from "./components/InvestmentCalculator";
+import { useActionFollowUp } from "./hooks/useActionFollowUp";
 
 function isComponentMessage(message: Message): message is ComponentMessage {
   return 'type' in message && message.type === "component";
@@ -48,13 +49,30 @@ const DynamicComponent: React.FC<ComponentMessage> = (message) => {
 };
 
 export default function Home() {
+  const { messages, sendMessage, isThinking, setMessages } = useAgent();
+  const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const walletStatus = useWalletJotai();
+
+  // Add the useActionFollowUp hook to handle follow-up messages from components
+  useActionFollowUp((message, source) => {
+    if (message) {
+      // Add a small delay to let the component fully render first
+      setTimeout(() => {
+        // Add the follow-up message directly as an agent message
+        const followUpMessage: Message = {
+          text: message,
+          sender: "agent"
+        };
+        setMessages(prev => [...prev, followUpMessage]);
+      }, 800);
+    }
+  });
+
   // State for client-side rendering detection
 
   const [isClient, setIsClient] = useState(false);
-  const [input, setInput] = useState("");
-  const { messages, sendMessage, isThinking } = useAgent();
   const { isConnected, account: address } = useMetaMask();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const {walletAddress, isConnected: xWalletConnect} = useWalletJotai()
 
   // Set client-side rendering flag on mount
