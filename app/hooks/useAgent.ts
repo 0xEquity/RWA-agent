@@ -159,5 +159,5 @@ export function useAgent() {
     setIsThinking(false);
   };
 
-  return { messages, sendMessage, isThinking };
+  return { messages, sendMessage, isThinking, setMessages };
 }

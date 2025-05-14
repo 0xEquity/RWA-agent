@@ -1,4 +1,6 @@
 import React from "react";
+import Image from "next/image";
+import { ActionFollowUpHelper } from "./ActionFollowUpHelper";
 import Link from "next/link";
 
 interface PropertyImage {
@@ -68,25 +70,28 @@ interface Action {
 interface PropertyDisplayProps {
   property: PropertyData;
   images: PropertyImage[];
-  actions: Action[];
+  actions?: Action[];
+  followUpMessage?: string;
 }
 
-export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({ property, images, actions }) => {
+export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({
+  property,
+  images,
+  actions,
+  followUpMessage
+}) => {
   const [activeImage, setActiveImage] = React.useState<number>(0);
 
   const handleImageClick = (index: number) => {
     setActiveImage(index);
   };
 
-  const handleActionClick = (action: Action) => {
-    if (action.url) {
-      window.open(action.url, '_blank');
-    }
-    // If action has an action property, it would be handled by a parent component
-  };
-
   return (
     <div className="flex flex-col property-display rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+      <ActionFollowUpHelper
+        followUpMessage={followUpMessage}
+        componentName="PropertyDisplay"
+      />
       <div className="flex gap-4">
         <div className="relative w-1/2 p-2 py-2.5 pr-0">
           <div className="h-44 w-full relative rounded overflow-hidden">
@@ -115,7 +120,7 @@ export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({ property, imag
 
         {/* Property Information */}
         <div className="p-2 text-xs">
-          <h1 className="text-2xl mt-1 mb-2 font-bold text-gray-800 dark:text-white">
+          <h1 className="text-2xl mt-1 mb-4 font-bold text-gray-800 dark:text-white">
             {property.title}
           </h1>
           <div className="flex flex-col gap-1.5">
@@ -179,25 +184,6 @@ export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({ property, imag
               </span>
               <span className="font-medium">10.00%</span>
             </div>
-            {actions.map((action, index) => (
-              <div className="flex gap-4 justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  {action.label}
-                </span>
-                <div className="flex gap-1 items-center">
-                  <Link
-                    href={action.url!}
-                    onClick={() => handleActionClick(action)}
-                    className="text-white font-medium"
-                  >
-                    View
-                  </Link>
-                  <div>
-                    <img src="/open-external.png" width={16} height={16} />
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ActionFollowUpHelper } from './ActionFollowUpHelper';
 
 interface CalculationResults {
   tokensReceived: string;
@@ -25,6 +26,7 @@ interface InvestmentCalculatorProps {
   property: PropertyInfo;
   onRecalculate?: () => void;
   onBuyNow?: () => void;
+  followUpMessage?: string;
 }
 
 export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({
@@ -32,10 +34,17 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({
   results,
   property,
   onRecalculate,
-  onBuyNow
+  onBuyNow,
+  followUpMessage
 }) => {
   return (
     <div className="investment-calculator rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+      {/* Include the ActionFollowUpHelper to handle follow-up messages */}
+      <ActionFollowUpHelper 
+        followUpMessage={followUpMessage} 
+        componentName="InvestmentCalculator" 
+      />
+      
       <div className="p-6">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Investment Projection</h2>
         <h3 className="text-lg text-gray-600 dark:text-gray-300 mb-4">

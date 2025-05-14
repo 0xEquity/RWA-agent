@@ -1,7 +1,8 @@
 import { ActionProvider, CreateAction } from "@coinbase/agentkit";
 import { z } from "zod";
-import { createPublicClient, http, parseAbi, Address } from "viem";
+import { createPublicClient, http, parseAbi, Address, StringToBytesOpts } from "viem";
 import { base } from "viem/chains";
+import { cookies } from "next/headers";
 
 // Minimal ERC20 ABI for the functions we need
 const CONTRACT_ABI = parseAbi([
@@ -11,6 +12,14 @@ const CONTRACT_ABI = parseAbi([
   "function totalSupply() view returns (uint256)",
 ]);
 
+const GetBalanceSchema = z
+  .object({
+    contractAddress: z
+      .string()
+      .describe("The contract address of the token to get the balance for"),
+  })
+  .strip()
+  .describe("Instructions for getting wallet balance");
 const CONTRACT_ADDRESS = "0xce827d203dc317cb8823098dcbe88fd3ae447482";
 const TOKEN_PRICE_USD = 10; // Fixed price as specified
 
@@ -19,7 +28,7 @@ const PROPERTY_DATA = {
   title: "158 Nelson St.",
   address: "Syracuse, NY 13204, USA",
   riskProfile: "Low",
-  minInvestment: 10.00,
+  minInvestment: 10.0,
   symbol: "WXRWA1",
   totalSupply: 13750,
   totalCost: 137500,
@@ -27,22 +36,22 @@ const PROPERTY_DATA = {
   currency: "USD",
   costPerToken: 10,
   addresses: {
-    8453: '0xce827d203dC317CB8823098DCbE88fD3aE447482',
-    42161: '0xce827d203dC317CB8823098DCbE88fD3aE447482'
+    8453: "0xce827d203dC317CB8823098DCbE88fD3aE447482",
+    42161: "0xce827d203dC317CB8823098DCbE88fD3aE447482",
   },
   investment: {
     originalCost: 125000,
-    sourcingFee: 12500
+    sourcingFee: 12500,
   },
   income: {
     yearly: {
       gross: 20400,
-      net: 14272
+      net: 14272,
     },
     monthly: {
       gross: 1700,
-      net: 1189.33
-    }
+      net: 1189.33,
+    },
   },
   expense: {
     yearly: {
@@ -52,7 +61,7 @@ const PROPERTY_DATA = {
       utilities: 480,
       platformFee: 382,
       maintenanceReserve: 204,
-      monthlyAdministration: 408
+      monthlyAdministration: 408,
     },
     monthly: {
       management: 136,
@@ -61,70 +70,94 @@ const PROPERTY_DATA = {
       utilities: 40,
       platformFee: 32,
       maintenanceReserve: 17,
-      monthlyAdministration: 34
-    }
+      monthlyAdministration: 34,
+    },
   },
-  titleDeed: "https://0x-property-docs.s3.us-west-2.amazonaws.com/WXRWA1/WXRWA1-TitleDeed.pdf",
-  salesContract: "https://0x-property-docs.s3.us-west-2.amazonaws.com/WXRWA1/WXRWA1-Property-Sales-Contract.pdf"
+  titleDeed:
+    "https://0x-property-docs.s3.us-west-2.amazonaws.com/WXRWA1/WXRWA1-TitleDeed.pdf",
+  salesContract:
+    "https://0x-property-docs.s3.us-west-2.amazonaws.com/WXRWA1/WXRWA1-Property-Sales-Contract.pdf",
 };
 
 // Define property images
 const PROPERTY_IMAGES = [
   {
     id: 1,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/2-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/2-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/2-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/2-360x240.jpg",
   },
   {
     id: 2,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/3-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/3-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/3-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/3-360x240.jpg",
   },
   {
     id: 3,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/4-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/4-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/4-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/4-360x240.jpg",
   },
   {
     id: 4,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/5-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/5-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/5-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/5-360x240.jpg",
   },
   {
     id: 5,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/6-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/6-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/6-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/6-360x240.jpg",
   },
   {
     id: 6,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/7-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/7-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/7-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/7-360x240.jpg",
   },
   {
     id: 7,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/8-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/8-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/8-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/8-360x240.jpg",
   },
   {
     id: 8,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/9-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/9-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/9-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/9-360x240.jpg",
   },
   {
     id: 9,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/10-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/10-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/10-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/10-360x240.jpg",
   },
   {
     id: 10,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/11-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/11-360x240.jpg",
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/11-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/11-360x240.jpg",
   },
   {
     id: 11,
-    original: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/12-980x652.jpg",
-    thumbnail: "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/12-360x240.jpg",
-  }
+    original:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/12-980x652.jpg",
+    thumbnail:
+      "https://0xequity-properties.s3.us-west-2.amazonaws.com/wxefr3/12-360x240.jpg",
+  },
 ];
 
 export class ZeroXEquityActionProvider extends ActionProvider {
@@ -317,39 +350,35 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
        - Expense breakdown (management, insurance, taxes, utilities, etc.)
        - Links to important documents (title deed, sales contract)
        - Property images
+    3. After displaying property information, it will ask the user:
+       - How much they want to invest
+       - Which property they're interested in (if multiple properties available)
+    4. Upon user response, it will calculate:
+       - Number of tokens they'll receive
+       - Monthly and yearly rental yield
+       - Return on investment
+    5. This prepares for the next step where users can confirm the investment,
+       check their wallet balance, and sign a transaction if they decide to invest.
 
     Example valid responses:
     - Returns a component with detailed property information and images.
-    - The component allows users to view property details and consider purchase options.
+    - Follows up with an investment amount query to continue the flow.
     
-    Important: This action provides comprehensive information about available properties for potential investors.`,
+    Important: This action provides comprehensive information about available properties and begins the investment flow.`,
     schema: z.object({}),
   })
-  async getPropertyInformation(): Promise<{
-    type: "component";
-    component: string;
-    props: Record<string, unknown>;
-  }> {
+  async getPropertyInformation(): Promise<
+    | {
+        type: "component";
+        component: string;
+        props: Record<string, unknown>;
+      }
+    | string
+  > {
     try {
-      // Create actions array for property display
-      const actions = [
-        // {
-        //   label: "Buy Property Tokens",
-        //   action: "buy_property_tokens"
-        // },
-        // {
-        //   label: "Calculate Returns",
-        //   action: "calculate_investment_returns"
-        // },
-        {
-          label: "Title Deed",
-          url: PROPERTY_DATA.titleDeed
-        },
-        {
-          label: "Sales Contract",
-          url: PROPERTY_DATA.salesContract
-        }
-      ];
+      // Step 1: Display property information
+      // Instead of returning a component with action buttons, we're going to return the component
+      // and then follow up with investment questions
 
       return {
         type: "component",
@@ -357,109 +386,372 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
         props: {
           property: PROPERTY_DATA,
           images: PROPERTY_IMAGES,
-          actions: actions
-        }
+          actions: [], // No action buttons as we'll handle the flow differently
+          followUpMessage:
+            "I've shown you details about this property. How much would you like to invest? (minimum $10)",
+        },
       };
+
+      // The assistant will follow up asking for investment amount
+      // Then will use calculateInvestmentReturns action with the user's input
+      // This creates a conversation flow to guide the user through the investment process
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`Failed to fetch property information: ${error.message}`);
+        throw new Error(
+          `Failed to fetch property information: ${error.message}`
+        );
       }
       throw new Error("Failed to fetch property information: Unknown error");
     }
   }
 
   @CreateAction({
-    name: "calculate_investment_returns",
-    description: `Calculate potential investment returns based on investment amount and time period.
+    name: "process_investment_intent",
+    description: `Process a user's intent to invest in a property by calculating returns and preparing for transaction.
     Thought process:
-    1. This action is triggered when a user wants to calculate potential returns on their investment.
-    2. The action requires two inputs:
-       - Investment amount in USD (minimum $10)
-       - Investment period in years (1-30)
-    3. The calculator will provide:
-       - Number of tokens the investment would purchase
-       - Monthly and yearly rental income
-       - Total return over the specified period
-       - ROI percentage
+    1. This action is triggered after a user expresses interest in investing and provides an amount.
+    2. It checks if a wallet is connected or provided via the address parameter.
+    3. It calculates investment returns based on the amount specified.
+    4. It asks the user if they want to proceed with the investment.
     
     Example valid responses:
-    - With valid inputs: Returns detailed investment projection
+    - With valid inputs: Returns detailed investment projection and asks for confirmation
     - With invalid investment amount: "Please provide a valid investment amount of at least $10."
-    - With invalid time period: "Please provide a valid time period between 1 and 30 years."
+    - Without wallet address: "Please connect your wallet first to continue with the investment"
     
-    Important: This action helps users understand the potential returns from their investment in property tokens.`,
+    Important: This action processes investment intents and moves the user toward transaction execution.`,
     schema: z.object({
       investmentAmount: z
         .string()
         .describe("The amount in USD the user wants to invest (minimum $10)"),
-      timePeriodYears: z
+      address: z
         .string()
-        .describe("The time period in years for the investment (1-30)"),
+        .optional()
+        .describe("The wallet address to use for the transaction. If not provided, will try to get from session"),
+      propertyId: z
+        .string()
+        .optional()
+        .describe(
+          "The ID of the property to invest in (optional if only one property available)"
+        ),
     }),
   })
-  async calculateInvestmentReturns(params: {
+  async processInvestmentIntent(params: {
     investmentAmount: string;
-    timePeriodYears: string;
-  }): Promise<{
-    type: "component";
-    component: string;
-    props: Record<string, unknown>;
-  }> {
+    address?: string;
+    propertyId?: string;
+  }): Promise<
+    | string
+    | {
+        type: "component";
+        component: string;
+        props: Record<string, unknown>;
+      }
+  > {
     try {
       const amount = parseFloat(params.investmentAmount);
-      const years = parseInt(params.timePeriodYears);
-      
+      let walletAddress = params.address;
+
       // Validate inputs
       if (isNaN(amount) || amount < PROPERTY_DATA.minInvestment) {
-        throw new Error(`Please provide a valid investment amount of at least $${PROPERTY_DATA.minInvestment.toFixed(2)}.`);
+        return `Please provide a valid investment amount of at least $${PROPERTY_DATA.minInvestment.toFixed(2)}.`;
       }
       
-      if (isNaN(years) || years < 1 || years > 30) {
-        throw new Error("Please provide a valid time period between 1 and 30 years.");
+      // If no wallet address is provided, check session data
+      if (!walletAddress) {
+        const cookieStore = cookies();
+        const walletSession = cookieStore.get('wallet_session')?.value;
+        
+        if (!walletSession) {
+          return "Please connect your wallet first to continue with your investment. Use connect_metamask or connect_xwallet to connect.";
+        }
+        
+        const sessionData = JSON.parse(walletSession);
+        walletAddress = sessionData.walletAddress;
+        
+        if (!walletAddress) {
+          return "No wallet address found in session. Please connect your wallet first to continue with your investment.";
+        }
       }
-      
+
+      // Property selection logic - currently we only have one property
+      // but this could be expanded to handle multiple properties
+      const selectedProperty = PROPERTY_DATA;
+
       // Calculate returns
-      const tokensReceived = amount / PROPERTY_DATA.costPerToken;
-      const percentageOwnership = (tokensReceived / PROPERTY_DATA.totalSupply) * 100;
-      
-      // Annual yield is 10% as specified
-      const annualYield = 0.10;
+      const tokensReceived = amount / selectedProperty.costPerToken;
+      const percentageOwnership =
+        (tokensReceived / selectedProperty.totalSupply) * 100;
+
+      // Annual yield is 10%
+      const annualYield = 0.1;
       const monthlyIncome = (amount * annualYield) / 12;
       const yearlyIncome = amount * annualYield;
-      const totalReturn = yearlyIncome * years;
-      const roi = (totalReturn / amount) * 100;
-      
+
+      // Prepare investment summary
       return {
         type: "component",
         component: "InvestmentCalculator",
         props: {
           input: {
             investmentAmount: amount,
-            timePeriodYears: years,
+            timePeriodYears: 1, // Default to 1 year for initial calculation
+            walletAddress: walletAddress, // Pass along wallet address for next step
           },
           results: {
             tokensReceived: tokensReceived.toFixed(2),
             percentageOwnership: percentageOwnership.toFixed(4),
             monthlyIncome: monthlyIncome.toFixed(2),
             yearlyIncome: yearlyIncome.toFixed(2),
-            totalReturn: totalReturn.toFixed(2),
-            roi: roi.toFixed(2),
-            projectedValue: (amount + totalReturn).toFixed(2)
+            totalReturn: yearlyIncome.toFixed(2),
+            roi: "10.00",
+            projectedValue: (amount + yearlyIncome).toFixed(2),
           },
           property: {
-            title: PROPERTY_DATA.title,
-            address: PROPERTY_DATA.address,
-            costPerToken: PROPERTY_DATA.costPerToken
+            title: selectedProperty.title,
+            address: selectedProperty.address,
+            costPerToken: selectedProperty.costPerToken,
           },
-          onBuyNow: () => {},
-          onRecalculate: () => {}
+          followUpMessage:
+            "Based on your $" +
+            amount.toFixed(2) +
+            " investment, you would receive " +
+            tokensReceived.toFixed(2) +
+            " tokens representing " +
+            percentageOwnership.toFixed(4) +
+            "% ownership. Would you like to proceed with this investment? (I'll check your wallet balance before preparing the transaction)"
+        },
+      };
+
+      // Next steps in the flow:
+      // 1. User confirms they want to invest
+      // 2. Check wallet balance to see if they have sufficient funds
+      // 3. If funds available, present SignTx component for final confirmation
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(
+          `Failed to process investment intent: ${error.message}`
+        );
+      }
+      throw new Error("Failed to process investment intent: Unknown error");
+    }
+  }
+
+  @CreateAction({
+    name: "prepare_investment_transaction",
+    description: `Prepare a transaction for property investment after user confirmation.
+    Thought process:
+    1. This action is triggered after a user confirms they want to proceed with an investment.
+    2. It checks the user's wallet for sufficient USD balance using get_balance.
+    3. If funds are available, it prepares a transaction for signing.
+    4. It presents the user with a SignTx component to complete the investment.
+    
+    Example valid responses:
+    - With sufficient balance: Returns SignTx component for user to complete transaction
+    - With insufficient balance: "You don't have enough funds in your wallet to complete this investment."
+    
+    Important: This action represents the final step in the investment flow, requiring human confirmation.`,
+    schema: z.object({
+      investmentAmount: z.string().describe("The amount in USD to invest"),
+      address: z
+        .string()
+        .describe(
+          "The wallet address to check balance and process transaction"
+        ),
+      propertyId: z
+        .string()
+        .optional()
+        .describe(
+          "The ID of the property to invest in (optional if only one property available)"
+        ),
+    }),
+  })
+  async prepareInvestmentTransaction(params: {
+    investmentAmount: string;
+    address: string;
+    propertyId?: string;
+  }): Promise<
+    | string
+    | {
+        type: "component";
+        component: string;
+        props: Record<string, unknown>;
+      }
+  > {
+    try {
+      const amount = parseFloat(params.investmentAmount);
+      
+      // Validate inputs
+      if (isNaN(amount) || amount < PROPERTY_DATA.minInvestment) {
+        return `Please provide a valid investment amount of at least $${PROPERTY_DATA.minInvestment.toFixed(2)}.`;
+      }
+      
+      if (!params.address || !params.address.startsWith("0x")) {
+        return "Please provide a valid Ethereum wallet address starting with '0x'";
+      }
+      
+      // Create client to interact with the blockchain
+      const client = createPublicClient({
+        chain: base,
+        transport: http()
+      });
+
+      // Default USDC contract address on Base
+      const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+      
+      // Check USDC balance to ensure user has enough funds
+      try {
+        const [balance, decimals] = await Promise.all([
+          client.readContract({
+            address: USDC_ADDRESS as Address,
+            abi: CONTRACT_ABI,
+            functionName: "balanceOf",
+            args: [params.address as Address]
+          }),
+          client.readContract({
+            address: USDC_ADDRESS as Address, 
+            abi: CONTRACT_ABI,
+            functionName: "decimals"
+          })
+        ]);
+        
+        // Format balance based on decimals
+        const divisor = Math.pow(10, Number(decimals));
+        const usdcBalance = Number(balance) / divisor;
+        
+        // Check if user has enough USDC
+        if (usdcBalance < amount) {
+          return `You don't have enough USDC to complete this investment. Your balance: ${usdcBalance.toFixed(2)} USDC. Required: ${amount.toFixed(2)} USDC.`;
         }
+      } catch (error) {
+        return `Error checking your USDC balance: ${error instanceof Error ? error.message : 'Unknown error'}. Please make sure your wallet is properly connected and try again.`;
+      }
+
+      // If balance is sufficient, prepare transaction for signing
+      return {
+        type: "component",
+        component: "SignTX",
+        props: {
+          address: params.address,
+          investmentAmount: amount.toFixed(2),
+          property: {
+            title: PROPERTY_DATA.title,
+            tokenSymbol: PROPERTY_DATA.symbol,
+            contractAddress: CONTRACT_ADDRESS,
+          },
+          message: `Please confirm your investment of $${amount.toFixed(2)} in ${PROPERTY_DATA.title}. This will purchase approximately ${(amount / PROPERTY_DATA.costPerToken).toFixed(2)} tokens.`,
+        },
       };
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`Failed to calculate investment returns: ${error.message}`);
+        throw new Error(
+          `Failed to prepare investment transaction: ${error.message}`
+        );
       }
-      throw new Error("Failed to calculate investment returns: Unknown error");
+      throw new Error(
+        "Failed to prepare investment transaction: Unknown error"
+      );
+    }
+  }
+
+  @CreateAction({
+    name: "get_balance",
+    description: `
+    Check your USDC balance on Base chain. Use this specific action for USDC balance checks instead of the erc20ActionProvider get_balance function.
+    
+    This action first verifies that a wallet is connected using either:
+    1. The wallet address provided directly in the parameters, or
+    2. The wallet address from the session data if no address is provided
+    
+    If no wallet is connected or provided, it will prompt you to connect your wallet first.
+    
+    Thought process:
+    1. Use provided wallet address or check if a wallet is connected via session
+    2. Read the USDC token balance for the wallet address
+    3. Format and return the balance information
+    
+    Example responses:
+    - When wallet not connected: "Please connect your wallet first using connect_metamask or connect_xwallet"
+    - When wallet connected: "Your USDC balance: 25.5 USDC"
+    `,
+    schema: z.object({
+      contractAddress: z
+        .string()
+        .optional()
+        .describe("Optional USDC contract address. If not provided, will use the default Base USDC address"),
+      walletAddress: z
+        .string()
+        .optional()
+        .describe("Optional wallet address to check balance for. If not provided, will use the address from wallet session")
+    })
+  })
+  async getBalance(
+    args: {
+      contractAddress: string,
+      walletAddress: StringToBytesOpts
+    }
+  ): Promise<string> {
+    try {
+      // Default USDC contract address on Base
+      const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+      const tokenAddress = args.contractAddress || USDC_ADDRESS;
+      
+      // Use provided wallet address or get from session
+      let walletAddress = args.walletAddress;
+      
+      // If no wallet address is provided, check session data
+      if (!walletAddress) {
+        const cookieStore = cookies();
+        const walletSession = cookieStore.get('wallet_session')?.value;
+        
+        if (!walletSession) {
+          return "Please provide a wallet address or connect your wallet first using connect_metamask or connect_xwallet";
+        }
+        
+        const sessionData = JSON.parse(walletSession);
+        walletAddress = sessionData.walletAddress;
+        
+        if (!walletAddress) {
+          return "No wallet address found in session. Please connect your wallet first or provide a wallet address.";
+        }
+      }
+      
+      // Create client to interact with the blockchain
+      const client = createPublicClient({
+        chain: base,
+        transport: http()
+      });
+
+      // Get token data including balance and decimals
+      const [balance, decimals, symbol] = await Promise.all([
+        client.readContract({
+          address: tokenAddress as Address,
+          abi: CONTRACT_ABI,
+          functionName: "balanceOf",
+          args: [walletAddress as Address]
+        }),
+        client.readContract({
+          address: tokenAddress as Address, 
+          abi: CONTRACT_ABI,
+          functionName: "decimals"
+        }),
+        client.readContract({
+          address: tokenAddress as Address,
+          abi: CONTRACT_ABI,
+          functionName: "name"
+        })
+      ]);
+
+      // Format balance based on decimals
+      const divisor = Math.pow(10, Number(decimals));
+      const formattedBalance = Number(balance) / divisor;
+
+      return `USDC Balance for ${walletAddress}: ${formattedBalance.toFixed(2)} USDC`;
+    } catch (error) {
+      if (error instanceof Error) {
+        return `Error checking USDC balance: ${error.message}`;
+      }
+      return "Error checking USDC balance: Unknown error";
     }
   }
 }
