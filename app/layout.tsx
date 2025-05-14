@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "./providers/AppContex";
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -9,6 +10,50 @@ export const metadata: Metadata = {
   title: "0xequity Agent",
   description: "Agent powered by 0xequity"
 };
+
+const BASE_URL = process.env.BASE_URL;
+
+const NavbarItems = [
+  {
+    label: "Swap",
+    href: "/buy-sell"
+  },
+
+  {
+    label: "Listings",
+    href: "/listings"
+  },
+  {
+    label: "Pools",
+    href: "/pools"
+  },
+  {
+    label: "Wallet",
+    href: "/wallet",
+    connectRequired: true
+  },
+  {
+    label: "Portfolio",
+    href: "/portfolio"
+  },
+  {
+    label: "Profile",
+    href: "/profile",
+    connectRequired: true
+  },
+  {
+    label: "Analytics",
+    href: "/analytics"
+  },
+  {
+    label: "Loans",
+    href: "/loans"
+  },
+  {
+    label: "Blog",
+    href: "https://www.0xequity.com/blog"
+  }
+];
 
 export default function RootLayout({
   children
@@ -24,13 +69,33 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AppProviders>
-          <header className="p-6 flex items-center justify-center relative">
-            <img
-              src="https://cdn.prod.website-files.com/6680bd18ac8704e3e2a1b0bd/6680bd18ac8704e3e2a1b10d_Logo.svg"
-              width={180}
-              height={180}
-              alt="0xequity"
-            />
+          <header className="p-6 flex items-center justify-between relative mb-8">
+            <img src="/logo.svg" />
+            <div className="flex gap-12">
+              {NavbarItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={`${BASE_URL}${item.href}`}
+                  className=" text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+            <div className="flex gap-6 mr-10">
+              <Link
+                href="https://www.instagram.com/0xequityRWA"
+                target="_blank"
+              >
+                <img src="/instagram.svg" className="w-5 h-5" />
+              </Link>
+              <Link href="https://t.me/oxequityRWA" target="_blank">
+                <img src="/telegram.svg" className="w-5 h-5" />
+              </Link>
+              <Link href="https://x.com/0xequityRWA" target="_blank">
+                <img src="/twitter.svg" className="w-5 h-5" />
+              </Link>
+            </div>
           </header>
 
           <main className="flex-grow flex items-center justify-center px-4">
