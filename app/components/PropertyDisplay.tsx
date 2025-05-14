@@ -70,7 +70,7 @@ interface Action {
 interface PropertyDisplayProps {
   property: PropertyData;
   images: PropertyImage[];
-  actions?: Action[];
+  actions: Action[];
   followUpMessage?: string;
 }
 
@@ -84,6 +84,13 @@ export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({
 
   const handleImageClick = (index: number) => {
     setActiveImage(index);
+  };
+
+  const handleActionClick = (action: Action) => {
+    if (action.url) {
+      window.open(action.url, "_blank");
+    }
+    // If action has an action property, it would be handled by a parent component
   };
 
   return (
@@ -184,6 +191,25 @@ export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({
               </span>
               <span className="font-medium">10.00%</span>
             </div>
+            {actions?.map((action, index) => (
+              <div className="flex gap-4 justify-between">
+                <span className="text-gray-600 dark:text-gray-400">
+                  {action.label}
+                </span>
+                <div className="flex gap-1 items-center">
+                  <Link
+                    href={action.url!}
+                    onClick={() => handleActionClick(action)}
+                    className="text-white font-medium"
+                  >
+                    View
+                  </Link>
+                  <div>
+                    <img src="/open-external.png" width={16} height={16} />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
