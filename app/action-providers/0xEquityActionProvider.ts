@@ -196,7 +196,7 @@ export class ZeroXEquityActionProvider extends ActionProvider {
       - Enter the minimum USDC balance required in your wallet to trigger the automation.
       - Enter the maximum USDC limit you'd like to allow for automation in each cycle.
 
-    Action: Return AutomateRentTx component to handle the automation flow
+    Action: Return AutomateRentTx component to handle the automation flow and strategy type must always be 1,2 or 3.
     Observation: User will be prompted to AutomateRentTx from their wallet.
     
     Example valid responses:
