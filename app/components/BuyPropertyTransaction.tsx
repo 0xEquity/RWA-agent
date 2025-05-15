@@ -115,12 +115,15 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
           expiration,
           callData: [approveTransactionTX, createPositionTX],
           txType: TransactionType.BUY_PROPERTY,
-          onSuccess: (hash) => {
+          onSuccess: async (hash) => {
             // Update this component's transaction state
             setTxHash(hash);
             setTxConfirmed(true);
             setSuccess(true);
-            
+            await client.waitForTransactionReceipt({
+              hash: hash,
+            });
+            setIsLoading(false)
             // Still update global state for compatibility
             globalTxState.setTxHash(hash);
           }
@@ -133,7 +136,7 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
       console.error("Web3 EOA not implemented");
       setError("Web3 EOA not implemented");
     }
-    setIsLoading(false);
+   
   };
   
   return (

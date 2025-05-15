@@ -108,12 +108,15 @@ export const AutomateRentTx: FC<{ data: any }> = ({ data }) => {
           expiration,
           callData: [approveTransactionTX, createPositionTX],
           txType: TransactionType.RENT_REDEEM,
-          onSuccess: (hash) => {
+          onSuccess: async(hash) => {
             // Update this component's transaction state
             setTxHash(hash);
             setTxConfirmed(true); 
             setSuccess(true);
-            
+            await client.waitForTransactionReceipt({
+              hash: hash,
+            });
+            setIsLoading(false)
             // Still update global state for compatibility
             globalTxState.setTxHash(hash);
           }
@@ -155,7 +158,8 @@ export const AutomateRentTx: FC<{ data: any }> = ({ data }) => {
           confirmation = await client.waitForTransactionReceipt({
             hash: automateTx,
           });
-          
+          setIsLoading(false);
+
           setTxHash(automateTx);
           globalTxState.setTxHash(automateTx); // Still update global state for compatibility
           setTxConfirmed(true);
@@ -166,7 +170,6 @@ export const AutomateRentTx: FC<{ data: any }> = ({ data }) => {
         setError(err?.message || "Transaction failed");
       }
     }
-    setIsLoading(false);
   };
   
   return (
