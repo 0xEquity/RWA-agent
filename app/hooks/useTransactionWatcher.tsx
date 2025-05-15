@@ -4,7 +4,6 @@ import {
   ContractFunctionRevertedError,
   CallExecutionError,
   ContractFunctionExecutionError,
-  TransactionType,
 } from "viem";
 
 import { usePublicClient } from "wagmi";
@@ -18,16 +17,18 @@ import { useTransactionOverviewJotai } from "../atoms/transactionoverview.jotai"
 import { useStepJotai } from "../atoms/steps.jotai";
 import { useRegisterJotai } from "../atoms/register.jotai";
 import { useXWalletContext } from "../providers/XWalletContext";
+import { TransactionType } from "../types/TransactionTypes";
 
 interface Props {
   expiration: number;
   nonce: number;
   callData: `0x${string}`[];
   txType: TransactionType;
-
+  onSuccess?: (txHash: `0x${string}`) => void;
   xWalletAddress?: string;
   root?: string;
 }
+
 export const useTransactionExecuter = () => {
   const publicClient = usePublicClient();
   const {
@@ -50,7 +51,7 @@ export const useTransactionExecuter = () => {
   const walletContext = useXWalletContext();
 
   const create = useCallback(
-    async ({ expiration, nonce, callData, root }: Props) => {
+    async ({ expiration, nonce, callData, root, txType, onSuccess }: Props) => {
       try {
         try {
           const passKey = PassKeyKeyPair.revivePassKeyPair(
@@ -92,7 +93,11 @@ export const useTransactionExecuter = () => {
             web3WalletAddress: walletWeb3Address,
           });
           setStep(3);
-          watcher(result, ChainId.base);
+          const txHash = await watcher(result, ChainId.base);
+          // Execute the onSuccess callback if provided
+          if (onSuccess && txHash) {
+            onSuccess(txHash);
+          }
         } catch (error) {
           parseError(error);
         }
@@ -101,7 +106,7 @@ export const useTransactionExecuter = () => {
         parseError(error);
       }
     },
-    []
+    [passKeys, waw, publicClient, userXWalletAddress, walletContext.email, walletType, walletWeb3Address]
   );
 
   const watcher = useCallback(async (result: any, chain_id: number) => {
@@ -124,11 +129,11 @@ export const useTransactionExecuter = () => {
         setErrorMessage("Tx Failed");
       }
 
-      return txHash;
+      return txHash as `0x${string}`;
     } else {
       throw new Error("Transaction hash not found or invalid format");
     }
-  }, []);
+  }, [publicClient, setTxSend, setTxHash, setTxConfirmed, setSuccessMessage, setStep, addStep, setErrorMessage]);
 
   const parseError = (error: any) => {
     console.log(error, "-=-=-=-=-=-=");
