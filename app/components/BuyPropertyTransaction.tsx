@@ -48,94 +48,92 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
   const client = usePublicClient();
   
   const handleClick = async () => {
-    if (!client) {
-      return;
-    }
-    setIsLoading(true);
-    const isXWallet = await client.getCode({
-      address: data.address as `0x${string}`,
-      blockTag: "latest",
-    });
-    
-    if (isXWallet) {
-      try {
-        const price = await client.readContract({
-          address: OCLR_ADDRESS[ChainId.base] as `0x${string}`,
-          abi: BASE_OCLR_Abi,
-          functionName: 'getPropertyPriceWithFees',
-          args: [
-            MARKETPLACE_ADDRESS[ChainId.base] as `0x${string}`,
-            USDC_ADDRESS[ChainId.base] as `0x${string}`,
-            data.property.contractAddress as `0x${string}`,
-            ["0x0000000000000000000000000000000000000000" as `0x${string}`],
-            [BigInt(data.noOfPropertyTokens)],
-          ],
-        });
-        
-        const approveCallData = encodeFunctionData({
-          abi: erc20Abi,
-          functionName: "approve",
-          args: [
-            OCLR_ADDRESS[ChainId.base] as `0x${string}`,
-            price,
-          ],
-        });
-        
-        let approveTransactionTX = encodeAbiParameters(
-          [{ type: "address" }, { type: "uint256" }, { type: "bytes" }],
-          [USDC_ADDRESS[ChainId.base] as `0x${string}`, 0n, approveCallData]
-        );
+  if (!client) {
+    return;
+  }
+  setIsLoading(true);
+  const isXWallet = await client.getCode({
+    address: data.address as `0x${string}`,
+    blockTag: "latest",
+  });
 
-        const buyPropertyCallData = encodeFunctionData({
-          abi: BASE_OCLR_Abi,
-          functionName: "buyProperty",
-          args: [
-            {
-              from: USDC_ADDRESS[ChainId.base] as `0x${string}`,
-              to: data.property.contractAddress as `0x${string}`,
-              isFeeInXeq: false,
-              recipient: data.address as `0x${string}`,
-              vaults: [
-                "0x0000000000000000000000000000000000000000",
-              ] as `0x${string}`[],
-              amounts: [BigInt(data.noOfPropertyTokens)],
-              arbCallData: "0x" as `0x${string}`,
-            },
-            MARKETPLACE_ADDRESS[ChainId.base] as `0x${string}`,
-          ],
-        });
-        
-        let createPositionTX = encodeAbiParameters(
-          [{ type: "address" }, { type: "uint256" }, { type: "bytes" }],
-          [OCLR_ADDRESS[ChainId.base] as `0x${string}`, 0n, buyPropertyCallData]
-        );
-        
-        create({
-          nonce,
-          expiration,
-          callData: [approveTransactionTX, createPositionTX],
-          txType: TransactionType.BUY_PROPERTY,
-          onSuccess: (hash) => {
-            // Update this component's transaction state
-            setTxHash(hash);
-            setTxConfirmed(true);
-            setSuccess(true);
-            
-            // Still update global state for compatibility
-            globalTxState.setTxHash(hash);
-          }
-        });
-      } catch (err: any) {
-        console.error("Transaction failed:", err);
-        setError(err?.message || "Transaction failed");
-      }
-    } else {
-      console.error("Web3 EOA not implemented");
-      setError("Web3 EOA not implemented");
+  if (isXWallet) {
+    try {
+      const price = await client.readContract({
+        address: OCLR_ADDRESS[ChainId.base] as `0x${string}`,
+        abi: BASE_OCLR_Abi,
+        functionName: 'getPropertyPriceWithFees',
+        args: [
+          MARKETPLACE_ADDRESS[ChainId.base] as `0x${string}`,
+          USDC_ADDRESS[ChainId.base] as `0x${string}`,
+          data.property.contractAddress as `0x${string}`,
+          ["0x0000000000000000000000000000000000000000" as `0x${string}`],
+          [BigInt(data.noOfPropertyTokens)],
+        ],
+      });
+
+      const approveCallData = encodeFunctionData({
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [
+          OCLR_ADDRESS[ChainId.base] as `0x${string}`,
+          price,
+        ],
+      });
+
+      let approveTransactionTX = encodeAbiParameters(
+        [{ type: "address" }, { type: "uint256" }, { type: "bytes" }],
+        [USDC_ADDRESS[ChainId.base] as `0x${string}`, 0n, approveCallData]
+      );
+
+      const buyPropertyCallData = encodeFunctionData({
+        abi: BASE_OCLR_Abi,
+        functionName: "buyProperty",
+        args: [
+          {
+            from: USDC_ADDRESS[ChainId.base] as `0x${string}`,
+            to: data.property.contractAddress as `0x${string}`,
+            isFeeInXeq: false,
+            recipient: data.address as `0x${string}`,
+            vaults: [
+              "0x0000000000000000000000000000000000000000",
+            ] as `0x${string}`[],
+            amounts: [BigInt(data.noOfPropertyTokens)],
+            arbCallData: "0x" as `0x${string}`,
+          },
+          MARKETPLACE_ADDRESS[ChainId.base] as `0x${string}`,
+        ],
+      });
+
+      let createPositionTX = encodeAbiParameters(
+        [{ type: "address" }, { type: "uint256" }, { type: "bytes" }],
+        [OCLR_ADDRESS[ChainId.base] as `0x${string}`, 0n, buyPropertyCallData]
+      );
+
+      create({
+        nonce,
+        expiration,
+        callData: [approveTransactionTX, createPositionTX],
+        txType: TransactionType.BUY_PROPERTY,
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          setTxConfirmed(true);
+          setSuccess(true);
+          globalTxState.setTxHash(hash);
+          setIsLoading(false);
+        }})
+    } catch (err: any) {
+      console.error("Transaction failed:", err);
+      setError(err?.message || "Transaction failed");
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  };
-  
+  } else {
+    console.error("Web3 EOA not implemented");
+    setError("Web3 EOA not implemented");
+    setIsLoading(false); 
+  }
+};
+
   return (
     <div className="mt-2 mb-2 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800" data-component-id={componentId}>
       <div className="font-medium">Buy Property Confirmation</div>
@@ -163,11 +161,7 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
         ) : !success ? (
           <button
             onClick={handleClick}
-            className={`font-bold py-2 px-4 rounded flex items-center ${
-              isLoading
-                ? "bg-blue-300 text-white cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600 text-white"
-            }`}
+            className={"font-bold py-2 px-4 rounded flex items-center bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"}
           >
             {isLoading ? (
               <svg
