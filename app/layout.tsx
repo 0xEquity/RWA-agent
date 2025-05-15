@@ -73,7 +73,7 @@ export default function RootLayout({
                 </Link>
               ))}
             </div>
-            <div className="flex gap-6 mr-10">
+            <div className="flex gap-6">
               <Link
                 href="https://www.instagram.com/0xequityRWA"
                 target="_blank"
