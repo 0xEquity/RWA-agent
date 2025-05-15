@@ -229,10 +229,11 @@ export const BASE_OCLR_Abi = [
   },
   {
     inputs: [
-      { internalType: "address", name: "_marketplace", type: "address" },
+      { internalType: "address", name: "marketplace", type: "address" },
       { internalType: "address", name: "from", type: "address" },
       { internalType: "address", name: "to", type: "address" },
-      { internalType: "uint256", name: "amountOfTokens", type: "uint256" },
+      { internalType: "address[]", name: "vaults", type: "address[]" },
+      { internalType: "uint256[]", name: "amounts", type: "uint256[]" },
     ],
     name: "getPropertyPriceWithFees",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],

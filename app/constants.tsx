@@ -35,11 +35,13 @@ export const PASSKEYS_ACCOUNT_IMP: AddressMap = {
 };
 
 export const PASSKEYS_FACTORY_ADDRESS: AddressMap = {
-    [ChainId.base]: "0x20ca0487ca2e66341D3A76b2cF917A7E504cc4D0",
-  } as const;
-
+  [ChainId.base]: "0x20ca0487ca2e66341D3A76b2cF917A7E504cc4D0",
+} as const;
 
 export const OCLR_ADDRESS: AddressMap = {
-    [ChainId.base]: "0xAe18881a3c7FaBe66A22A7D4e626bA7018AD2a3C",
-  };
-  
+  [ChainId.base]: "0xAe18881a3c7FaBe66A22A7D4e626bA7018AD2a3C",
+};
+
+export const MARKETPLACE_ADDRESS: AddressMap = {
+  [ChainId.base]: "0xf5c7A456841C1f0DB4d0a2c958FEfa47d680B4ff",
+};

@@ -9,6 +9,9 @@ import {
 } from "viem";
 import { base } from "viem/chains";
 import { cookies } from "next/headers";
+import { MARKETPLACE_ADDRESS, OCLR_ADDRESS } from "../constants";
+import { ChainId } from "../sdk/ChainId";
+import { BASE_OCLR_Abi } from "../abi/BASE_OCLR_Abi";
 
 // Minimal ERC20 ABI for the functions we need
 const CONTRACT_ABI = parseAbi([
@@ -532,15 +535,14 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
             address: selectedProperty.address,
             costPerToken: selectedProperty.costPerToken,
           },
-          followUpMessage:
-            `Based on your $${amount.toFixed(2)} investment over ${investmentYears} years, you would receive ${tokensReceived.toFixed(2)} tokens representing ${percentageOwnership.toFixed(4)}% ownership. Your estimated total return would be $${totalIncome.toFixed(2)} (${roi.toFixed(2)}% ROI), with a projected final value of $${projectedValue.toFixed(2)}. Would you like to proceed with this investment?`,
+          followUpMessage: `Based on your $${amount.toFixed(2)} investment over ${investmentYears} years, you would receive ${tokensReceived.toFixed(2)} tokens representing ${percentageOwnership.toFixed(4)}% ownership. Your estimated total return would be $${totalIncome.toFixed(2)} (${roi.toFixed(2)}% ROI), with a projected final value of $${projectedValue.toFixed(2)}. Would you like to proceed with this investment?`,
         },
       };
 
       // Next steps in the flow:
       // 1. User confirms they want to invest
       // 2. Check wallet balance to see if they have sufficient funds
-      // 3. If funds available, present AutomateRentTx component for final confirmation
+      // 3. If funds available, present BuyPropertyTx component for final confirmation
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(
@@ -558,10 +560,10 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
     1. This action is triggered after a user confirms they want to proceed with an investment.
     2. It checks the user's wallet for sufficient USD balance using get_balance.
     3. If funds are available, it prepares a transaction for signing.
-    4. It presents the user with a AutomateRentTx component to complete the investment.
+    4. It presents the user with a BuyPropertyTx component to complete the investment.
     
     Example valid responses:
-    - With sufficient balance: Returns AutomateRentTx component for user to complete transaction
+    - With sufficient balance: Returns BuyPropertyTx component for user to complete transaction
     - With insufficient balance: "You don't have enough funds in your wallet to complete this investment."
     
     Important: This action represents the final step in the investment flow, requiring human confirmation.`,
@@ -594,7 +596,8 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
   > {
     try {
       const amount = parseFloat(params.investmentAmount);
-
+      let maxAmount = 0n
+      let noOfPropertyTokens = 0
       // Validate inputs
       if (isNaN(amount) || amount < PROPERTY_DATA.minInvestment) {
         return `Please provide a valid investment amount of at least $${PROPERTY_DATA.minInvestment.toFixed(2)}.`;
@@ -615,7 +618,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
 
       // Check USDC balance to ensure user has enough funds
       try {
-        const [balance, decimals] = await Promise.all([
+        const [balance, decimals, costPerToken] = await Promise.all([
           client.readContract({
             address: USDC_ADDRESS as Address,
             abi: CONTRACT_ABI,
@@ -627,15 +630,31 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
             abi: CONTRACT_ABI,
             functionName: "decimals",
           }),
+          client.readContract({
+            address: OCLR_ADDRESS[ChainId.base] as Address,
+            abi: BASE_OCLR_Abi,
+            functionName: "getPropertyPriceWithFees",
+            args: [
+              MARKETPLACE_ADDRESS[ChainId.base] as Address,
+              USDC_ADDRESS,
+              CONTRACT_ADDRESS,
+              ["0x0000000000000000000000000000000000000000"],
+              [BigInt(1)],
+            ],
+          }),
         ]);
 
         // Format balance based on decimals
         const divisor = Math.pow(10, Number(decimals));
         const usdcBalance = Number(balance) / divisor;
 
+        const maxTokens  = Math.floor(Number(BigInt(amount) / costPerToken))
+        maxAmount = BigInt(maxTokens) * costPerToken;
+        noOfPropertyTokens =maxTokens
+
         // Check if user has enough USDC
-        if (usdcBalance < amount) {
-          return `You don't have enough USDC to complete this investment. Your balance: ${usdcBalance.toFixed(2)} USDC. Required: ${amount.toFixed(2)} USDC.`;
+        if (usdcBalance < maxAmount) {
+          return `You don't have enough USDC to complete this investment. Your balance: ${usdcBalance.toFixed(2)} USDC. Required: ${Number(maxAmount).toFixed(2)} USDC.`;
         }
       } catch (error) {
         return `Error checking your USDC balance: ${error instanceof Error ? error.message : "Unknown error"}. Please make sure your wallet is properly connected and try again.`;
@@ -644,16 +663,17 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
       // If balance is sufficient, prepare transaction for signing
       return {
         type: "component",
-        component: "AutomateRentTx",
+        component: "BuyPropertyTx",
         props: {
           address: params.address,
-          investmentAmount: amount.toFixed(2),
+          investmentAmount: Number(maxAmount).toFixed(6),
+          noOfPropertyTokens ,
           property: {
             title: PROPERTY_DATA.title,
             tokenSymbol: PROPERTY_DATA.symbol,
             contractAddress: CONTRACT_ADDRESS,
           },
-          message: `Please confirm your investment of $${amount.toFixed(2)} in ${PROPERTY_DATA.title}. This will purchase approximately ${(amount / PROPERTY_DATA.costPerToken).toFixed(2)} tokens.`,
+          message: `Please confirm your investment of $${Number(maxAmount).toFixed(2)} in ${PROPERTY_DATA.title}. This will purchase approximately ${(noOfPropertyTokens)} tokens.`,
         },
       };
     } catch (error) {
@@ -749,7 +769,6 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
           abi: CONTRACT_ABI,
           functionName: "name",
         }),
-        
       ]);
 
       // Format balance based on decimals

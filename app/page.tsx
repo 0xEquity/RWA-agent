@@ -14,6 +14,7 @@ import { useWalletJotai } from "./atoms/wallet.jotai";
 import { PropertyDisplay } from "./components/PropertyDisplay";
 import { InvestmentCalculator } from "./components/InvestmentCalculator";
 import { useActionFollowUp } from "./hooks/useActionFollowUp";
+import { BuyPropertyTx } from "./components/BuyPropertyTransaction";
 
 function isComponentMessage(message: Message): message is ComponentMessage {
   return 'type' in message && message.type === "component";
@@ -32,9 +33,10 @@ const DynamicComponent: React.FC<ComponentMessage> = (message) => {
       />;
     case 'ConnectWallet':
       return <ConnectWallet />;
-
     case 'AutomateRentTx':
         return <AutomateRentTx data={props}/>;
+    case 'BuyPropertyTx':
+        return <BuyPropertyTx data={props}/>
     case 'ToolResponse':
       return <ToolResponse data={props.data || props} />;
     case 'XWallet':

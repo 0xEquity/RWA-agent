@@ -5,10 +5,12 @@ import { WalletRequiredPrompt } from './WalletRequiredPrompt';
 import { AutomateRentTx } from './AutomateRentTransaction';
 import { PropertyDisplay } from './PropertyDisplay';
 import { InvestmentCalculator } from './InvestmentCalculator';
+import { BuyPropertyTx } from './BuyPropertyTransaction';
 
 const componentRegistry = {
   ConnectWallet: ConnectWallet,
   AutomateRentTx: AutomateRentTx,
+  BuyPropertyTx: BuyPropertyTx,
   ToolResponse: ToolResponse,
   XWallet: XWallet,
   WalletRequiredPrompt: WalletRequiredPrompt,
