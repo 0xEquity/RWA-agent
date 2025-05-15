@@ -1,6 +1,12 @@
 import { ActionProvider, CreateAction } from "@coinbase/agentkit";
 import { z } from "zod";
-import { createPublicClient, http, parseAbi, Address, StringToBytesOpts } from "viem";
+import {
+  createPublicClient,
+  http,
+  parseAbi,
+  Address,
+  StringToBytesOpts,
+} from "viem";
 import { base } from "viem/chains";
 import { cookies } from "next/headers";
 
@@ -388,7 +394,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
           images: PROPERTY_IMAGES,
           actions: [], // No action buttons as we'll handle the flow differently
           followUpMessage:
-            "I've shown you details about this property. How much would you like to invest? (minimum $10)",
+            "I've shown you details about this property. How much would you like to invest ? (minimum $10)",
         },
       };
 
@@ -411,7 +417,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
     Thought process:
     1. This action is triggered after a user expresses interest in investing and provides an amount.
     2. It checks if a wallet is connected or provided via the address parameter.
-    3. It calculates investment returns based on the amount specified.
+    3. It calculates investment returns based on the amount specified and investment duration.
     4. It asks the user if they want to proceed with the investment.
     
     Example valid responses:
@@ -424,10 +430,15 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
       investmentAmount: z
         .string()
         .describe("The amount in USD the user wants to invest (minimum $10)"),
+      investmentPeriodYears: z
+        .string()
+        .describe("The number of years the user plans to keep the investment"),
       address: z
         .string()
         .optional()
-        .describe("The wallet address to use for the transaction. If not provided, will try to get from session"),
+        .describe(
+          "The wallet address to use for the transaction. If not provided, will try to get from session"
+        ),
       propertyId: z
         .string()
         .optional()
@@ -438,6 +449,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
   })
   async processInvestmentIntent(params: {
     investmentAmount: string;
+    investmentPeriodYears: string;
     address?: string;
     propertyId?: string;
   }): Promise<
@@ -450,25 +462,30 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
   > {
     try {
       const amount = parseFloat(params.investmentAmount);
+      const investmentYears = parseFloat(params.investmentPeriodYears);
       let walletAddress = params.address;
 
       // Validate inputs
       if (isNaN(amount) || amount < PROPERTY_DATA.minInvestment) {
         return `Please provide a valid investment amount of at least $${PROPERTY_DATA.minInvestment.toFixed(2)}.`;
       }
-      
+
+      if (isNaN(investmentYears) || investmentYears <= 0) {
+        return "Please provide a valid investment period in years (must be a positive number).";
+      }
+
       // If no wallet address is provided, check session data
       if (!walletAddress) {
         const cookieStore = cookies();
-        const walletSession = cookieStore.get('wallet_session')?.value;
-        
+        const walletSession = cookieStore.get("wallet_session")?.value;
+
         if (!walletSession) {
           return "Please connect your wallet first to continue with your investment. Use connect_metamask or connect_xwallet to connect.";
         }
-        
+
         const sessionData = JSON.parse(walletSession);
         walletAddress = sessionData.walletAddress;
-        
+
         if (!walletAddress) {
           return "No wallet address found in session. Please connect your wallet first to continue with your investment.";
         }
@@ -487,6 +504,9 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
       const annualYield = 0.1;
       const monthlyIncome = (amount * annualYield) / 12;
       const yearlyIncome = amount * annualYield;
+      const totalIncome = yearlyIncome * investmentYears;
+      const roi = (totalIncome / amount) * 100;
+      const projectedValue = amount + totalIncome;
 
       // Prepare investment summary
       return {
@@ -495,7 +515,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
         props: {
           input: {
             investmentAmount: amount,
-            timePeriodYears: 1, // Default to 1 year for initial calculation
+            timePeriodYears: investmentYears,
             walletAddress: walletAddress, // Pass along wallet address for next step
           },
           results: {
@@ -503,9 +523,9 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
             percentageOwnership: percentageOwnership.toFixed(4),
             monthlyIncome: monthlyIncome.toFixed(2),
             yearlyIncome: yearlyIncome.toFixed(2),
-            totalReturn: yearlyIncome.toFixed(2),
-            roi: "10.00",
-            projectedValue: (amount + yearlyIncome).toFixed(2),
+            totalReturn: totalIncome.toFixed(2),
+            roi: roi.toFixed(2),
+            projectedValue: projectedValue.toFixed(2),
           },
           property: {
             title: selectedProperty.title,
@@ -513,13 +533,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
             costPerToken: selectedProperty.costPerToken,
           },
           followUpMessage:
-            "Based on your $" +
-            amount.toFixed(2) +
-            " investment, you would receive " +
-            tokensReceived.toFixed(2) +
-            " tokens representing " +
-            percentageOwnership.toFixed(4) +
-            "% ownership. Would you like to proceed with this investment? (I'll check your wallet balance before preparing the transaction)"
+            `Based on your $${amount.toFixed(2)} investment over ${investmentYears} years, you would receive ${tokensReceived.toFixed(2)} tokens representing ${percentageOwnership.toFixed(4)}% ownership. Your estimated total return would be $${totalIncome.toFixed(2)} (${roi.toFixed(2)}% ROI), with a projected final value of $${projectedValue.toFixed(2)}. Would you like to proceed with this investment?`,
         },
       };
 
@@ -580,25 +594,25 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
   > {
     try {
       const amount = parseFloat(params.investmentAmount);
-      
+
       // Validate inputs
       if (isNaN(amount) || amount < PROPERTY_DATA.minInvestment) {
         return `Please provide a valid investment amount of at least $${PROPERTY_DATA.minInvestment.toFixed(2)}.`;
       }
-      
+
       if (!params.address || !params.address.startsWith("0x")) {
         return "Please provide a valid Ethereum wallet address starting with '0x'";
       }
-      
+
       // Create client to interact with the blockchain
       const client = createPublicClient({
         chain: base,
-        transport: http()
+        transport: http(),
       });
 
       // Default USDC contract address on Base
       const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-      
+
       // Check USDC balance to ensure user has enough funds
       try {
         const [balance, decimals] = await Promise.all([
@@ -606,25 +620,25 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
             address: USDC_ADDRESS as Address,
             abi: CONTRACT_ABI,
             functionName: "balanceOf",
-            args: [params.address as Address]
+            args: [params.address as Address],
           }),
           client.readContract({
-            address: USDC_ADDRESS as Address, 
+            address: USDC_ADDRESS as Address,
             abi: CONTRACT_ABI,
-            functionName: "decimals"
-          })
+            functionName: "decimals",
+          }),
         ]);
-        
+
         // Format balance based on decimals
         const divisor = Math.pow(10, Number(decimals));
         const usdcBalance = Number(balance) / divisor;
-        
+
         // Check if user has enough USDC
         if (usdcBalance < amount) {
           return `You don't have enough USDC to complete this investment. Your balance: ${usdcBalance.toFixed(2)} USDC. Required: ${amount.toFixed(2)} USDC.`;
         }
       } catch (error) {
-        return `Error checking your USDC balance: ${error instanceof Error ? error.message : 'Unknown error'}. Please make sure your wallet is properly connected and try again.`;
+        return `Error checking your USDC balance: ${error instanceof Error ? error.message : "Unknown error"}. Please make sure your wallet is properly connected and try again.`;
       }
 
       // If balance is sufficient, prepare transaction for signing
@@ -675,51 +689,46 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
     - When wallet connected: "Your USDC balance: 25.5 USDC"
     `,
     schema: z.object({
-      contractAddress: z
-        .string()
-        .optional()
-        .describe("Optional USDC contract address. If not provided, will use the default Base USDC address"),
       walletAddress: z
         .string()
         .optional()
-        .describe("Optional wallet address to check balance for. If not provided, will use the address from wallet session")
-    })
+        .describe(
+          "Optional wallet address to check balance for. If not provided, will use the address from wallet session"
+        ),
+    }),
   })
-  async getBalance(
-    args: {
-      contractAddress: string,
-      walletAddress: StringToBytesOpts
-    }
-  ): Promise<string> {
+  async getBalance(args: {
+    walletAddress: StringToBytesOpts;
+  }): Promise<string> {
     try {
       // Default USDC contract address on Base
       const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-      const tokenAddress = args.contractAddress || USDC_ADDRESS;
-      
+      const tokenAddress = USDC_ADDRESS;
+
       // Use provided wallet address or get from session
       let walletAddress = args.walletAddress;
-      
+
       // If no wallet address is provided, check session data
       if (!walletAddress) {
         const cookieStore = cookies();
-        const walletSession = cookieStore.get('wallet_session')?.value;
-        
+        const walletSession = cookieStore.get("wallet_session")?.value;
+
         if (!walletSession) {
           return "Please provide a wallet address or connect your wallet first using connect_metamask or connect_xwallet";
         }
-        
+
         const sessionData = JSON.parse(walletSession);
         walletAddress = sessionData.walletAddress;
-        
+
         if (!walletAddress) {
           return "No wallet address found in session. Please connect your wallet first or provide a wallet address.";
         }
       }
-      
+
       // Create client to interact with the blockchain
       const client = createPublicClient({
         chain: base,
-        transport: http()
+        transport: http(),
       });
 
       // Get token data including balance and decimals
@@ -728,18 +737,18 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
           address: tokenAddress as Address,
           abi: CONTRACT_ABI,
           functionName: "balanceOf",
-          args: [walletAddress as Address]
-        }),
-        client.readContract({
-          address: tokenAddress as Address, 
-          abi: CONTRACT_ABI,
-          functionName: "decimals"
+          args: [walletAddress as Address],
         }),
         client.readContract({
           address: tokenAddress as Address,
           abi: CONTRACT_ABI,
-          functionName: "name"
-        })
+          functionName: "decimals",
+        }),
+        client.readContract({
+          address: tokenAddress as Address,
+          abi: CONTRACT_ABI,
+          functionName: "name",
+        }),
       ]);
 
       // Format balance based on decimals

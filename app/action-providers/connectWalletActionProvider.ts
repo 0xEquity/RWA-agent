@@ -73,22 +73,6 @@ export class ConnectWalletActionProvider extends ActionProvider {
     _: z.infer<typeof CheckWalletConnectionSchema>
   ): Promise<string> {
     try {
-      // First try to access the wallet directly through the provider
-      let directCheck = false;
-      let walletAddress = "";
-      try {
-        walletAddress = walletProvider.getAddress();
-        directCheck = true;
-      } catch (e) {
-        // Direct check failed, we'll check session cookies later
-      }
-
-      // If direct check succeeded, return that info
-      if (directCheck) {
-        return `A wallet is currently connected and active. Address: ${walletAddress}`;
-      }
-
-      // Otherwise check session data from cookies
       const sessionData = await this.getSessionWalletData();
       
       if (sessionData.isConnected && sessionData.walletAddress) {

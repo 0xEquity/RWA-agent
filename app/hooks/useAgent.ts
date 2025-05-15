@@ -86,20 +86,20 @@ export function useAgent() {
       if ('text' in responseMessage) {
         if (responseMessage.requiresWalletConnection) {
           // Add wallet connection prompt component
-          setMessages(prev => [
-            ...prev, 
-            {
-              type: "component",
-              component: "WalletRequiredPrompt",
-              props: {
-                onWalletConnected: async () => {
-                  // When wallet is connected, resubmit the last user message
-                  await sendMessage("I've connected my wallet, please continue.");
-                },
-              },
-              sender: "agent"
-            } as ComponentMessage
-          ]);
+          // setMessages(prev => [
+          //   ...prev, 
+          //   {
+          //     type: "component",
+          //     component: "WalletRequiredPrompt",
+          //     props: {
+          //       onWalletConnected: async () => {
+          //         // When wallet is connected, resubmit the last user message
+          //         await sendMessage("I've connected my wallet, please continue.");
+          //       },
+          //     },
+          //     sender: "agent"
+          //   } as ComponentMessage
+          // ]);
           
           // Still add the original message
           setMessages(prev => [...prev, responseMessage]);
