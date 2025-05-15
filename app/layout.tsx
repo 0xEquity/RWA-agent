@@ -61,7 +61,7 @@ export default function RootLayout({
         <AppProviders>
           <header className="p-6 flex items-center justify-between relative mb-8">
             <img src="/logo.svg" />
-            <div className="flex gap-12">
+            <div className="flex gap-12 ml-9">
               {NavbarItems.map((item) => {
                 const isExternal = item.href.startsWith("http");
                 const fullHref = isExternal ? item.href : `${BASE_URL}${item.href}`;
