@@ -643,14 +643,15 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
             ],
           }),
         ]);
-
+        console.log(costPerToken,"------")
         // Format balance based on decimals
         const divisor = Math.pow(10, Number(decimals));
         const usdcBalance = Number(balance) / divisor;
 
-        const maxTokens  = Math.floor(Number(BigInt(amount) / costPerToken))
-        maxAmount = BigInt(maxTokens) * costPerToken;
+        const maxTokens  = Math.floor(Number(BigInt(amount) / (costPerToken / BigInt(divisor))))
+        maxAmount = BigInt(maxTokens) * (costPerToken / BigInt(divisor));
         noOfPropertyTokens =maxTokens
+        console.log({maxAmount, maxTokens, noOfPropertyTokens})
 
         // Check if user has enough USDC
         if (usdcBalance < maxAmount) {
