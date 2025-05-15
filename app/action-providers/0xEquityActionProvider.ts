@@ -692,7 +692,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
   @CreateAction({
     name: "get_balance",
     description: `
-    Check your USDC balance on Base chain. Use this specific action for USDC balance checks instead of the erc20ActionProvider get_balance function.
+    Check your USDC and property token (WXRWA1) balances on Base chain. Use this action whenever you need to check token balances instead of the erc20ActionProvider get_balance function.
     
     This action first verifies that a wallet is connected using either:
     1. The wallet address provided directly in the parameters, or
@@ -700,14 +700,18 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
     
     If no wallet is connected or provided, it will prompt you to connect your wallet first.
     
+    The function returns both:
+    - USDC balance (the stablecoin used for investments)
+    - WXRWA1 property token balance (representing your property ownership)
+    
     Thought process:
     1. Use provided wallet address or check if a wallet is connected via session
-    2. Read the USDC token balance for the wallet address
-    3. Format and return the balance information
+    2. Read both USDC and WXRWA1 token balances for the wallet address
+    3. Format and return the complete balance information
     
     Example responses:
     - When wallet not connected: "Please connect your wallet first using connect_metamask or connect_xwallet"
-    - When wallet connected: "Your USDC balance: 25.5 USDC"
+    - When wallet connected: "Your balances on Base chain: 25.5 USDC, 10.0 WXRWA1 tokens"
     `,
     schema: z.object({
       walletAddress: z
@@ -718,16 +722,15 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
         ),
     }),
   })
-  async getBalance(args: {
-    walletAddress: StringToBytesOpts;
+  async getBalance(params: {
+    walletAddress?: string;
   }): Promise<string> {
     try {
-      // Default USDC contract address on Base
+      // Contract addresses on Base chain
       const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-      const tokenAddress = USDC_ADDRESS;
 
       // Use provided wallet address or get from session
-      let walletAddress = args.walletAddress;
+      let walletAddress = params.walletAddress;
 
       // If no wallet address is provided, check session data
       if (!walletAddress) {
@@ -752,36 +755,49 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
         transport: http(),
       });
 
-      // Get token data including balance and decimals
-      const [balance, decimals, symbol] = await Promise.all([
+      // Get USDC balance data
+      const [usdcBalance, usdcDecimals] = await Promise.all([
         client.readContract({
-          address: tokenAddress as Address,
+          address: USDC_ADDRESS as Address,
           abi: CONTRACT_ABI,
           functionName: "balanceOf",
           args: [walletAddress as Address],
         }),
         client.readContract({
-          address: tokenAddress as Address,
+          address: USDC_ADDRESS as Address,
           abi: CONTRACT_ABI,
           functionName: "decimals",
         }),
+      ]);
+
+      // Get WXRWA1 property token balance data
+      const [wxrwaBalance, wxrwaDecimals] = await Promise.all([
         client.readContract({
-          address: tokenAddress as Address,
+          address: CONTRACT_ADDRESS as Address,
           abi: CONTRACT_ABI,
-          functionName: "name",
+          functionName: "balanceOf",
+          args: [walletAddress as Address],
+        }),
+        client.readContract({
+          address: CONTRACT_ADDRESS as Address,
+          abi: CONTRACT_ABI,
+          functionName: "decimals",
         }),
       ]);
 
-      // Format balance based on decimals
-      const divisor = Math.pow(10, Number(decimals));
-      const formattedBalance = Number(balance) / divisor;
+      // Format balances based on decimals
+      const usdcDivisor = Math.pow(10, Number(usdcDecimals));
+      const wxrwaDivisor = Math.pow(10, Number(wxrwaDecimals));
+      
+      const formattedUsdcBalance = Number(usdcBalance) / usdcDivisor;
+      const formattedWxrwaBalance = Number(wxrwaBalance) / wxrwaDivisor;
 
-      return `USDC Balance for ${walletAddress}: ${formattedBalance.toFixed(2)} USDC`;
+      return `Balances for ${walletAddress} on Base chain:\n${formattedUsdcBalance.toFixed(2)} USDC\n${formattedWxrwaBalance.toFixed(2)} WXRWA1 property tokens`;
     } catch (error) {
       if (error instanceof Error) {
-        return `Error checking USDC balance: ${error.message}`;
+        return `Error checking token balances: ${error.message}`;
       }
-      return "Error checking USDC balance: Unknown error";
+      return "Error checking token balances: Unknown error";
     }
   }
 }
