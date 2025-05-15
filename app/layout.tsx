@@ -41,7 +41,7 @@ const NavbarItems = [
   },
   {
     label: "Blog",
-    href: "/blog"
+    href: "https://www.0xequity.com/blog"
   }
 ];
 
@@ -62,16 +62,20 @@ export default function RootLayout({
           <header className="p-6 flex items-center justify-between relative mb-8">
             <img src="/logo.svg" />
             <div className="flex gap-12">
-              {NavbarItems.map((item) => (
-                <Link
-                  target="_blank"
-                  key={item.label}
-                  href={`${BASE_URL}${item.href}`}
-                  className=" text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {NavbarItems.map((item) => {
+                const isExternal = item.href.startsWith("http");
+                const fullHref = isExternal ? item.href : `${BASE_URL}${item.href}`;
+                return (
+                  <Link
+                    target="_blank"
+                    key={item.label}
+                    href={fullHref}
+                    className=" text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400"
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </div>
             <div className="flex gap-6">
               <Link
