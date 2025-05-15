@@ -31,7 +31,7 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
   
   // Unique ID for this component instance
   const [componentId] = useState(() => generateUniqueId());
-
+  const [isLoading, setIsLoading] = useState(false);
   const { create } = useTransactionExecuter();
   const [expiration, setExpiration] = useState(0);
   // Still get the global transaction state for compatibility
@@ -51,7 +51,7 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
     if (!client) {
       return;
     }
-
+    setIsLoading(true);
     const isXWallet = await client.getCode({
       address: data.address as `0x${string}`,
       blockTag: "latest",
@@ -133,6 +133,7 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
       console.error("Web3 EOA not implemented");
       setError("Web3 EOA not implemented");
     }
+    setIsLoading(false);
   };
   
   return (
@@ -150,9 +151,9 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
           </div>
         ) : txConfirmed ? (
           <div className="text-green-600 dark:text-green-400">
-            Successfully Bought the Property tokens{" "}
-            <a 
-              target="_blank" 
+            Successfully Bought the Property tokens:{" "}
+            <a
+              target="_blank"
               href={`https://basescan.org/tx/${txHash}`}
               className="text-blue-600 dark:text-blue-400 underline"
             >
@@ -162,15 +163,41 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
         ) : !success ? (
           <button
             onClick={handleClick}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center"
+            className={`font-bold py-2 px-4 rounded flex items-center ${
+              isLoading
+                ? "bg-blue-300 text-white cursor-not-allowed"
+                : "bg-blue-500 hover:bg-blue-600 text-white"
+            }`}
           >
-            <span>Confirm Transaction</span>
+            {isLoading ? (
+              <svg
+                className="animate-spin h-5 w-5 mr-2 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 00-8 8z"
+                />
+              </svg>
+            ) : null}
+            <span>{isLoading ? "Processing..." : "Confirm Transaction"}</span>
           </button>
         ) : (
           <div className="text-green-600 dark:text-green-400">
             Successfully Bought the Property tokens{" "}
-            <a 
-              target="_blank" 
+            <a
+              target="_blank"
               href={`https://basescan.org/tx/${txHash}`}
               className="text-blue-600 dark:text-blue-400 underline"
             >
