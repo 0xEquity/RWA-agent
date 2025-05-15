@@ -195,7 +195,7 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
           </button>
         ) : (
           <div className="text-green-600 dark:text-green-400">
-            Successfully Bought the Property tokens{" "}
+            Successfully Bought the Property tokens:{" "}
             <a
               target="_blank"
               href={`https://basescan.org/tx/${txHash}`}
