@@ -2,13 +2,13 @@ import { ConnectWallet } from './ConnectWallet';
 import { ToolResponse } from './ToolResponse';
 import { XWallet } from './XWallet';
 import { WalletRequiredPrompt } from './WalletRequiredPrompt';
-import { SignTx } from './SignTx';
+import { AutomateRentTx } from './AutomateRentTransaction';
 import { PropertyDisplay } from './PropertyDisplay';
 import { InvestmentCalculator } from './InvestmentCalculator';
 
 const componentRegistry = {
   ConnectWallet: ConnectWallet,
-  SignTX: SignTx,
+  AutomateRentTx: AutomateRentTx,
   ToolResponse: ToolResponse,
   XWallet: XWallet,
   WalletRequiredPrompt: WalletRequiredPrompt,

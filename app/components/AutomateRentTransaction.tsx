@@ -19,7 +19,7 @@ import { useTransactionExecuter } from "../hooks/useTransactionWatcher";
 import { TransactionType } from "../types/TransactionTypes";
 import { useTransactionOverviewJotai } from "../atoms/transactionoverview.jotai";
 
-export const SignTx: FC<{ data: any }> = ({ data }) => {
+export const AutomateRentTx: FC<{ data: any }> = ({ data }) => {
   console.log(data);
   const [success, setSuccess] = useState(false);
   const { writeContractAsync: delegateRentAsync } =

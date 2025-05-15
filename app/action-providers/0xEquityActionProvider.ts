@@ -193,8 +193,8 @@ export class ZeroXEquityActionProvider extends ActionProvider {
       - Enter the minimum USDC balance required in your wallet to trigger the automation.
       - Enter the maximum USDC limit you'd like to allow for automation in each cycle.
 
-    Action: Return SignTX component to handle the automation flow
-    Observation: User will be prompted to signTx from their wallet.
+    Action: Return AutomateRentTx component to handle the automation flow
+    Observation: User will be prompted to AutomateRentTx from their wallet.
     
     Example valid responses:
     - Without address: "Please provide a wallet address to check property investments. Usage: 'Check investments for 0x...''"
@@ -235,7 +235,7 @@ export class ZeroXEquityActionProvider extends ActionProvider {
       // Max USDC: ${params.maxUSDC}`;
       return {
         type: "component",
-        component: "SignTX",
+        component: "AutomateRentTx",
         props: {
           address: params.address,
           strategy: params.strategy,
@@ -540,7 +540,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
       // Next steps in the flow:
       // 1. User confirms they want to invest
       // 2. Check wallet balance to see if they have sufficient funds
-      // 3. If funds available, present SignTx component for final confirmation
+      // 3. If funds available, present AutomateRentTx component for final confirmation
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(
@@ -558,10 +558,10 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
     1. This action is triggered after a user confirms they want to proceed with an investment.
     2. It checks the user's wallet for sufficient USD balance using get_balance.
     3. If funds are available, it prepares a transaction for signing.
-    4. It presents the user with a SignTx component to complete the investment.
+    4. It presents the user with a AutomateRentTx component to complete the investment.
     
     Example valid responses:
-    - With sufficient balance: Returns SignTx component for user to complete transaction
+    - With sufficient balance: Returns AutomateRentTx component for user to complete transaction
     - With insufficient balance: "You don't have enough funds in your wallet to complete this investment."
     
     Important: This action represents the final step in the investment flow, requiring human confirmation.`,
@@ -644,7 +644,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
       // If balance is sufficient, prepare transaction for signing
       return {
         type: "component",
-        component: "SignTX",
+        component: "AutomateRentTx",
         props: {
           address: params.address,
           investmentAmount: amount.toFixed(2),
@@ -749,6 +749,7 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
           abi: CONTRACT_ABI,
           functionName: "name",
         }),
+        
       ]);
 
       // Format balance based on decimals

@@ -9,7 +9,7 @@ import { ToolResponse } from "./components/ToolResponse";
 import { XWallet } from "./components/XWallet";
 import ReactMarkdown from "react-markdown";
 import type { ComponentMessage, Message } from "./hooks/useAgent";
-import { SignTx } from "./components/SignTx";
+import { AutomateRentTx } from "./components/AutomateRentTransaction";
 import { useWalletJotai } from "./atoms/wallet.jotai";
 import { PropertyDisplay } from "./components/PropertyDisplay";
 import { InvestmentCalculator } from "./components/InvestmentCalculator";
@@ -33,8 +33,8 @@ const DynamicComponent: React.FC<ComponentMessage> = (message) => {
     case 'ConnectWallet':
       return <ConnectWallet />;
 
-    case 'SignTX':
-        return <SignTx data={props}/>;
+    case 'AutomateRentTx':
+        return <AutomateRentTx data={props}/>;
     case 'ToolResponse':
       return <ToolResponse data={props.data || props} />;
     case 'XWallet':
