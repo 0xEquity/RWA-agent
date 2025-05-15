@@ -422,7 +422,17 @@ Total Value: $${totalValueUSD.toFixed(2)} (at $10 per token)`;
     2. It checks if a wallet is connected or provided via the address parameter.
     3. It calculates investment returns based on the amount specified and investment duration.
     4. It asks the user if they want to proceed with the investment.
-    
+
+    This action should also handle questions where the user asks about income projections for specific timeframes, such as:
+    - "How much would I earn yearly if I invest $20?"
+    - "What is my monthly income if I invest $50?"
+    - "What's my daily return on a $100 investment?"
+
+    In these cases:
+    - Interpret the timeframe (daily, monthly, yearly) from the user's query.
+    - Calculate the proportional gross and net income for that timeframe based on the investment amount.
+    - Use the same investment logic to provide a projection, even if the user does not explicitly mention duration.
+
     Example valid responses:
     - With valid inputs: Returns detailed investment projection and asks for confirmation
     - With invalid investment amount: "Please provide a valid investment amount of at least $10."
