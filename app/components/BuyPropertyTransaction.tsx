@@ -47,7 +47,7 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
         args: [
           MARKETPLACE_ADDRESS[ChainId.base] as `0x${string}`,
           USDC_ADDRESS[ChainId.base] as `0x${string}`,
-          WXRWA1_ADDRESS[ChainId.base] as `0x${string}`,
+          data.property.contractAddress as `0x${string}`,
           ["0x0000000000000000000000000000000000000000" as `0x${string}`],
           [BigInt(data.noOfPropertyTokens)],
         ],
@@ -71,9 +71,9 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
         args: [
           {
             from: USDC_ADDRESS[ChainId.base] as `0x${string}`,
-            to: WXRWA1_ADDRESS[ChainId.base] as `0x${string}`,
+            to: data.property.contractAddress as `0x${string}`,
             isFeeInXeq: false,
-            recipient: data.walletAddress as `0x${string}`,
+            recipient: data.address as `0x${string}`,
             vaults: [
               "0x0000000000000000000000000000000000000000",
             ] as `0x${string}`[],
@@ -99,7 +99,7 @@ export const BuyPropertyTx: FC<{ data: any }> = ({ data }) => {
   };
   return (
     <div>
-      Buy Property Confirmation Property tokens: {data.property.tile} <br />
+      Buy Property Confirmation Property tokens: {data.property.title} <br />
       No of Property tokens: {data.noOfPropertyTokens} <br />
       Investment amount: {data.investmentAmount} <br />
 
