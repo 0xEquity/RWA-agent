@@ -177,11 +177,11 @@ export default function Home() {
           )}
         </div>
         {/* Wallet component */}
-        <div className="flex-shrink-0">
+        {/* <div className="flex-shrink-0">
           <div className="relative z-10">
             <ConnectWallet />
           </div>
-        </div>
+        </div> */}
       </div>
     );
   };
