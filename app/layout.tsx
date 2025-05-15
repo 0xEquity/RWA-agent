@@ -28,18 +28,8 @@ const NavbarItems = [
     href: "/pools"
   },
   {
-    label: "Wallet",
-    href: "/wallet",
-    connectRequired: true
-  },
-  {
     label: "Portfolio",
     href: "/portfolio"
-  },
-  {
-    label: "Profile",
-    href: "/profile",
-    connectRequired: true
   },
   {
     label: "Analytics",
@@ -51,7 +41,7 @@ const NavbarItems = [
   },
   {
     label: "Blog",
-    href: "https://www.0xequity.com/blog"
+    href: "/blog"
   }
 ];
 
@@ -74,6 +64,7 @@ export default function RootLayout({
             <div className="flex gap-12">
               {NavbarItems.map((item) => (
                 <Link
+                  target="_blank"
                   key={item.label}
                   href={`${BASE_URL}${item.href}`}
                   className=" text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400"
