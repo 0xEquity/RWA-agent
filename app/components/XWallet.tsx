@@ -1,17 +1,46 @@
-import { useState } from 'react';
-import { useXWallet } from '../hooks/useXWallet';
-import { useXWalletContext } from '../providers/XWalletContext';
+import { useState } from "react";
+import { useXWallet } from "../hooks/useXWallet";
+import { useXWalletContext } from "../providers/XWalletContext";
+import { userNotExistAtom } from "../atoms/login";
+import { useAtom } from "jotai";
 
 export const XWallet = () => {
-  const [emailInput, setEmailInput] = useState('');
+  const [emailInput, setEmailInput] = useState("");
   const { isLoading, error, setLoading, setError } = useXWallet();
+  const [{ mutateAsync: userCheckAsync }] = useAtom(userNotExistAtom);
   const walletContext = useXWalletContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
+    const u1 = await userCheckAsync({
+      email: emailInput,
+      user_id: ""
+    });
+
+    if (u1 === true) {
+      setError("User not exist");
+
+      const followUpMessage = `We couldn't find a user with that email. Would you like to create a new account?
+                              \n\nPlease sign up here: [https://app.0xequity.com](https://app.0xequity.com)\n\nLearn how to sign up: [https://docs.0xequity.com/how-can-i/create-an-account](https://docs.0xequity.com/how-can-i/create-an-account)`;
+      const componentName = "XWallet";
+
+      const timer = setTimeout(() => {
+        const messageEvent = new CustomEvent("action-followup-message", {
+          detail: {
+            message: followUpMessage,
+            source: componentName
+          }
+        });
+        window.dispatchEvent(messageEvent);
+      }, 500);
+
+      setLoading(false);
+      return; // exit early
+    }
+
     try {
       // Simple email validation
       if (!emailInput.includes('@')) {
