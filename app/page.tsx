@@ -104,8 +104,16 @@ export default function Home() {
     
     if ('text' in message) {
       return (
-        <div className="prose dark:prose-invert">
-          <ReactMarkdown>{message.text}</ReactMarkdown>
+        <div className="prose dark:prose-invert react-markdown">
+          <ReactMarkdown
+            components={{
+              a: ({ node, ...props }) => (
+                <a {...props} target="_blank" rel="noopener noreferrer" />
+              )
+            }}
+          >
+            {message.text}
+          </ReactMarkdown>
         </div>
       );
     }

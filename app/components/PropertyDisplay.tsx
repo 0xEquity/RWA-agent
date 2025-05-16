@@ -92,6 +92,8 @@ export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({
     // If action has an action property, it would be handled by a parent component
   };
 
+  const BASE_URL = process.env.BASE_URL || "https://app.0xequity.com";
+
   return (
     <div className="flex flex-col property-display rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
       <ActionFollowUpHelper
@@ -126,7 +128,7 @@ export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({
 
         {/* Property Information */}
         <div className="p-2 text-xs">
-          <h1 className="text-2xl mt-1 mb-4 font-bold text-gray-800 dark:text-white">
+          <h1 className="text-2xl mt-1 mb-3 font-bold text-gray-800 dark:text-white">
             {property.title}
           </h1>
           <div className="flex flex-col gap-1.5">
@@ -190,6 +192,15 @@ export const PropertyDisplay: React.FC<PropertyDisplayProps> = ({
               </span>
               <span className="font-medium">10.00%</span>
             </div>
+            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500  mt-1">
+              <Link
+                target="_blank"
+                href={`${BASE_URL}/listings`}
+                className="text-white font-medium"
+              >
+                View Details
+              </Link>
+            </button>
             {actions.map((action, index) => (
               <div className="flex gap-4 justify-between">
                 <span className="text-gray-600 dark:text-gray-400">
